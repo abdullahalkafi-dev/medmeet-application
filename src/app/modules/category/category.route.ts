@@ -30,9 +30,6 @@ router.get(
   CategoryController.getAllCategories
 );
 
-router.get(
-  '/:id',
-  CategoryController.getSingleCategory
-);
+router.get('/:id', CategoryController.getSingleCategory);
 
 export const CategoryRoutes = router;

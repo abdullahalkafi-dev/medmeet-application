@@ -36,11 +36,25 @@ const getAllCategories = async (query: Record<string, unknown>) => {
 };
 
 const updateCategory = async (id: string, payload: Partial<TCategory>) => {
-  const category = await Category.findByIdAndUpdate(id, payload, { new: true });
+  const category = await Category.findById(id);
+
   if (!category) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Category not found!');
   }
-  return category;
+  const alreadyExistCategory = await Category.findOne({
+    name: payload.name,
+    _id: { $ne: id },
+  });
+
+  if (alreadyExistCategory) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Category already exist!');
+  }
+
+  const updatedCategory = await Category.findByIdAndUpdate(id, payload, {
+    new: true,
+  });
+
+  return updatedCategory;
 };
 
 // need-work
@@ -56,6 +70,6 @@ export const CategoryService = {
   createCategoryToDB,
   getSingleCategory,
   updateCategory,
-  getAllCategories
+  getAllCategories,
   // deleteCategory
 };

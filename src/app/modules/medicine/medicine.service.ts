@@ -3,7 +3,7 @@ import AppError from '../../errors/AppError';
 import { Medicine } from './medicine.model';
 import { QueryBuilder } from '../../builder/QueryBuilder';
 
-const createMedicine = async (payload:  {name:string}) => {
+const createMedicine = async (payload: { name: string }) => {
   const isExistMedicine = await Medicine.findOne({
     name: payload.name,
   });
@@ -14,19 +14,19 @@ const createMedicine = async (payload:  {name:string}) => {
   return result;
 };
 
-const getAllMedicines = async (query:Record<string,unknown>) => {
- const medicineQuery = new QueryBuilder(Medicine.find(), query)
+const getAllMedicines = async (query: Record<string, unknown>) => {
+  const medicineQuery = new QueryBuilder(Medicine.find(), query)
     .search(['name'])
     .filter()
     .sort()
     .paginate()
     .fields();
-    const meta = await medicineQuery.countTotal();
-    const result = await medicineQuery.modelQuery;
+  const meta = await medicineQuery.countTotal();
+  const result = await medicineQuery.modelQuery;
   return { result, meta };
 };
 
-const updateMedicine = async (id: string, payload: {name:string}) => {
+const updateMedicine = async (id: string, payload: { name: string }) => {
   const medicine = await Medicine.findById(id);
   if (!medicine) {
     throw new AppError(StatusCodes.NOT_FOUND, 'Medicine not found!');
@@ -40,7 +40,7 @@ const updateMedicine = async (id: string, payload: {name:string}) => {
   }
   const updatedMedicine = await Medicine.findByIdAndUpdate(
     id,
-    { name: payload },
+    { name: payload.name },
     {
       new: true,
     }
@@ -60,5 +60,5 @@ export const MedicineService = {
   createMedicine,
   getAllMedicines,
   deleteMedicine,
-  updateMedicine
+  updateMedicine,
 };

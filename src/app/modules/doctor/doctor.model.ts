@@ -38,7 +38,8 @@ const doctorSchema = new Schema<TDoctor, DoctorModal>(
       type: String,
     },
     specialist: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: 'Category',
     },
     experience: {
       type: Number,
@@ -85,9 +86,10 @@ const doctorSchema = new Schema<TDoctor, DoctorModal>(
       type: Boolean,
       default: false,
     },
-    isApproved: {
-      type: Boolean,
-      default: false,
+    approvedStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
     },
     isAllFieldsFilled: {
       type: Boolean,

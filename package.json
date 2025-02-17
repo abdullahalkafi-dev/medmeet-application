@@ -1,8 +1,9 @@
 {
-  "name": "Medmeet Application",
+  "name": "medmeet-application",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "lint:check": "eslint --ignore-path .eslintignore --ext .js,.ts",

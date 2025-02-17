@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-
 const createMedicineZodValidation = z.object({
   body: z.object({
     name: z.string({ required_error: 'Medicine name is required' }),
@@ -9,11 +8,11 @@ const createMedicineZodValidation = z.object({
 
 const updateMedicineZodValidation = z.object({
   body: z.object({
-    name: z.string().optional(),
+    name: z.string(),
   }),
 });
 
 export const MedicineValidation = {
-    createMedicineZodValidation,
-    updateMedicineZodValidation,
-    };
+  createMedicineZodValidation,
+  updateMedicineZodValidation,
+};

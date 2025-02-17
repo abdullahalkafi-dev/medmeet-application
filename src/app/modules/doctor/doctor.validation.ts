@@ -41,7 +41,7 @@ const updateDoctorZodSchema = z.object({
       subscription: z.boolean().optional(),
       status: z.enum(['active', 'delete']).optional(),
       verified: z.boolean().optional(),
-      isApproved: z.boolean().optional(),
+      approvedStatus: z.enum(['pending', 'approved', 'rejected']).optional(),
       authentication: z
         .object({
           isResetPassword: z.boolean().optional(),
@@ -52,10 +52,17 @@ const updateDoctorZodSchema = z.object({
     })
     .refine(
       data => {
-        return !(data.email || data.doctorId);
+        return !(
+          data.email ||
+          data.doctorId ||
+          data.approvedStatus ||
+          data.verified ||
+          data.authentication ||
+          data.status
+        );
       },
       {
-        message: 'Neither email nor doctorId can be updated',
+        message: 'Those fields are not allowed to update',
         path: ['data'],
       }
     ),
@@ -68,7 +75,6 @@ const loginZodSchema = z.object({
     }),
   }),
 });
-
 export const DoctorValidation = {
   createDoctorZodSchema,
   updateDoctorZodSchema,

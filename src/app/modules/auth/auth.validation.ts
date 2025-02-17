@@ -2,22 +2,26 @@ import { z } from 'zod';
 
 const createVerifyEmailZodSchema = z.object({
   body: z.object({
-    email: z.string({ required_error: 'Email is required' }),
-    oneTimeCode: z.number({ required_error: 'One time code is required' }),
+    uniqueId: z.string({ required_error: 'Email is required' }),
+    oneTimeCode: z
+      .union([z.string().transform(val => parseFloat(val)), z.number()])
+      .refine((val: any) => !isNaN(val), {
+        message: 'One time code is required',
+      }),
   }),
 });
 
 const createLoginZodSchema = z.object({
   body: z.object({
-    email: z.string().optional(),
-    phnNum: z.string().optional(),
+    email: z.string({ required_error: 'Email is required' }),
     password: z.string({ required_error: 'Password is required' }),
   }),
 });
 
+
 const createForgetPasswordZodSchema = z.object({
   body: z.object({
-    email: z.string({ required_error: 'Email is required' }),
+    uniqueId: z.string({ required_error: 'Email is required' }),
   }),
 });
 
@@ -41,6 +45,7 @@ const createChangePasswordZodSchema = z.object({
     }),
   }),
 });
+
 
 export const AuthValidation = {
   createVerifyEmailZodSchema,

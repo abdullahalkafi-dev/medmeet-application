@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { USER_ROLES } from '../../../enums/user';
 
 export type TDoctor = {
@@ -11,7 +11,7 @@ export type TDoctor = {
   dob?: string; //dd/mm/yyyy
   country: string;
   doctorId: string;
-  specialist: string;
+  specialist: Types.ObjectId;
   experience: number; // years
   clinic: string;
   clinicAddress: string;
@@ -20,13 +20,12 @@ export type TDoctor = {
   professionalIdFront: string;
   professionalIdBack: string;
   medicalLicense: string;
-
   image?: string;
   subscription: boolean;
   password: string;
   status: 'active' | 'delete';
-  verified?: boolean; 
-  isApproved?: boolean;
+  verified?: boolean;
+  approvedStatus?: "pending" | "approved" | "rejected";
   isAllFieldsFilled?: boolean;
   authentication?: {
     isResetPassword: boolean;

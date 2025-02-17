@@ -42,7 +42,7 @@ const loginDoctor = async (
       id: doctor._id,
       role: doctor.role,
       email: doctor.email,
-      isApproved: doctor.isApproved,
+      approvedStatus: doctor.approvedStatus,
     },
     config.jwt.jwt_secret as Secret,
     '60d'
@@ -62,7 +62,7 @@ const getDoctorProfileFromDB = async (
   doctor: JwtPayload
 ): Promise<Partial<TDoctor>> => {
   const { id } = doctor;
-  const isExistDoctor = await Doctor.findById(id);
+  const isExistDoctor = await Doctor.findById(id).populate('specialist');
   if (!isExistDoctor) {
     throw new AppError(StatusCodes.BAD_REQUEST, "Doctor doesn't exist!");
   }
@@ -120,24 +120,26 @@ const updateDoctorProfileToDB = async (
       updateDoc.medicalLicense
     )
   ) {
-    await Doctor.findOneAndUpdate(
+    return await Doctor.findOneAndUpdate(
       { _id: id },
       { isAllFieldsFilled: true },
       { new: true }
     );
   }
-  console.log(updateDoc);
 
   return updateDoc;
 };
 const getSingleDoctor = async (id: string): Promise<TDoctor | null> => {
-  const result = await Doctor.findById(id);
+  const result = await Doctor.findById(id).populate('specialist');
   return result;
 };
 //get all doctors
-const getAllDoctors = async (query: Record<string, unknown>) => {
-  const doctorQuery = new QueryBuilder(Doctor.find(), query)
-    .search(['name', 'country', 'specialist', 'clinic'])
+const getAllDoctors = async (query: any) => {
+  const doctorQuery = new QueryBuilder(
+    Doctor.find().populate('specialist'),
+    query
+  )
+    .search(['name', 'country', 'clinic'])
     .filter()
     .sort()
     .paginate()
@@ -147,6 +149,26 @@ const getAllDoctors = async (query: Record<string, unknown>) => {
   return { result, meta };
 };
 
+const updateDoctorApprovedStatus = async (
+  id: string,
+  payload: { status: string }
+) => {
+  const doctor = await Doctor.findById(id);
+  const status = ['pending', 'approved', 'rejected'];
+  if (!status.includes(payload.status)) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid status');
+  }
+  if (!doctor) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Doctor not found!');
+  }
+  const updatedDoctor = await Doctor.findByIdAndUpdate(
+    id,
+    { approvedStatus: payload.status },
+    { new: true }
+  );
+  return updatedDoctor;
+};
+
 export const DoctorService = {
   getDoctorProfileFromDB,
   updateDoctorProfileToDB,
@@ -154,4 +176,5 @@ export const DoctorService = {
   createDoctorToDB,
   getAllDoctors,
   loginDoctor,
+  updateDoctorApprovedStatus,
 };

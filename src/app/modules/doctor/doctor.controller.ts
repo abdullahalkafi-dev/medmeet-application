@@ -77,7 +77,7 @@ const updateDoctorProfile = catchAsync(
     }
 
     const doctorData = JSON.parse(req.body.data);
-    console.log(doctorData);
+
     const data = {
       image,
       professionalIdFront,
@@ -97,6 +97,10 @@ const updateDoctorProfile = catchAsync(
 );
 
 const getAllDoctors = catchAsync(async (req: Request, res: Response) => {
+  if (!(req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN')) {
+    req.query.approvedStatus = 'approved' as any;
+  }
+
   const result = await DoctorService.getAllDoctors(req.query);
 
   sendResponse(res, {
@@ -118,6 +122,21 @@ const getSingleDoctor = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const updateDoctorApprovedStatus = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await DoctorService.updateDoctorApprovedStatus(
+      req.params.id,
+      req.body
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Doctor approved successfully',
+      data: result,
+    });
+  }
+);
 
 export const DoctorController = {
   createDoctorToDB,
@@ -126,4 +145,5 @@ export const DoctorController = {
   getAllDoctors,
   getSingleDoctor,
   loginDoctor,
+  updateDoctorApprovedStatus,
 };

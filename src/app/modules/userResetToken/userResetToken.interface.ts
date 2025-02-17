@@ -1,12 +1,12 @@
 import { Model, Types } from 'mongoose';
 
-export type IResetToken = {
+export type IUserResetToken = {
   user: Types.ObjectId;
   token: string;
   expireAt: Date;
 };
 
-export type ResetTokenModel = {
+export type UserResetTokenModel = {
   isExistToken(token: string): any;
   isExpireToken(token: string): boolean;
-} & Model<IResetToken>;
+} & Model<IUserResetToken>;

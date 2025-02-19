@@ -1,5 +1,5 @@
 import express from 'express';
-import { AuthRoutes } from '../app/modules/auth/auth.route';
+
 
 import { AdminRoutes } from '../app/modules/admin/admin.routes';
 
@@ -17,6 +17,7 @@ import { UserRoutes } from '../app/modules/user/user.route';
 import { CategoryRoutes } from '../app/modules/category/category.route';
 import { SettingRoutes } from '../app/modules/setting/setting.route';
 import { MedicineRoutes } from '../app/modules/medicine/medicine.route';
+import { DoctorScheduleRouter } from '../app/modules/doctorSchedule/doctorSchema.router';
 
 const router = express.Router();
 
@@ -26,6 +27,7 @@ const apiRoutes = [
   { path: '/category', route: CategoryRoutes },
   { path: '/setting', route: SettingRoutes },
   { path: '/medicine', route: MedicineRoutes },
+   { path: '/schedule', route: DoctorScheduleRouter },
   // { path: '/auth', route: AuthRoutes },
   // { path: '/admin', route: AdminRoutes },
 

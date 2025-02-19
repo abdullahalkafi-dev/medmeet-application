@@ -25,13 +25,17 @@ const createUserToDB = async (payload: Partial<TUser>) => {
 
 const loginUser = async (payload: Partial<TUser> & { uniqueId: string }) => {
   const { uniqueId, password } = payload;
-
+  if (!uniqueId || !password) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Please provide email and password');
+  }
   const user = await User.findOne({
     email: uniqueId,
   }).select('+password');
+
   if (!user) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'User not found');
   }
+  console.log(password, user.password);
   const isMatch = await User.isMatchPassword(password!, user.password);
   if (!isMatch) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid credentials');

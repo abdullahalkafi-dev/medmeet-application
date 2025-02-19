@@ -70,6 +70,10 @@ export class QueryBuilder<T> {
     const queryObj = { ...this.query };
     const excludeFields = ['searchTerm', 'page', 'limit', 'sortBy', 'fields'];
 
+    if (queryObj.specialist) {
+      queryObj.specialist = { $eq: queryObj.specialist as string };
+    }
+
     excludeFields.forEach(e => delete queryObj[e]);
 
     Object.keys(queryObj).forEach(key => {

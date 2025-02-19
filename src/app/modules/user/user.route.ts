@@ -34,6 +34,10 @@ router.post(
   AuthController.userVerifyEmailToDB
 );
 router.post(
+  '/user-resend-otp',
+  AuthController.userResendOtp
+);
+router.post(
   '/reset-password',
   validateRequest(AuthValidation.createResetPasswordZodSchema),
   AuthController.userResetPasswordToDB
@@ -41,7 +45,7 @@ router.post(
 
 router.post(
   '/change-password',
-  auth(USER_ROLES.ADMIN, USER_ROLES.USER,USER_ROLES.SUPER_ADMIN),
+  auth(USER_ROLES.ADMIN, USER_ROLES.USER, USER_ROLES.SUPER_ADMIN),
   validateRequest(AuthValidation.createChangePasswordZodSchema),
   AuthController.userChangePasswordToDB
 );

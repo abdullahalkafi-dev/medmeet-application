@@ -20,8 +20,7 @@ const createUserToDB = catchAsync(
 );
 
 const loginUser = catchAsync(async (req: Request, res: Response) => {
-  console.log(req.body);
-  console.log('dddd');
+
   const { uniqueId, password } = req.body;
   const user = await UserService.loginUser({ uniqueId, password });
 

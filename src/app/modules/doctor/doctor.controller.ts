@@ -97,6 +97,7 @@ const updateDoctorProfile = catchAsync(
 );
 
 const getAllDoctors = catchAsync(async (req: Request, res: Response) => {
+  console.log(req.query);
   if (!(req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN')) {
     req.query.approvedStatus = 'approved' as any;
   }

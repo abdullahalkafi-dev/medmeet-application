@@ -58,7 +58,7 @@ const updateDoctorZodSchema = z.object({
           data.approvedStatus ||
           data.verified ||
           data.authentication ||
-          data.status
+          data.subscription          
         );
       },
       {

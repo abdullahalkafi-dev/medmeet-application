@@ -9,7 +9,6 @@ import { AuthValidation } from '../auth/auth.validation';
 import { AuthController } from '../auth/auth.controller';
 
 const router = express.Router();
-
 router.post(
   '/',
   validateRequest(DoctorValidation.createDoctorZodSchema),
@@ -21,7 +20,6 @@ router.post(
   validateRequest(DoctorValidation.loginZodSchema),
   DoctorController.loginDoctor
 );
-
 router.post(
   '/forgot-password',
   validateRequest(AuthValidation.createForgetPasswordZodSchema),
@@ -31,6 +29,10 @@ router.post(
   '/verify-email',
   validateRequest(AuthValidation.createVerifyEmailZodSchema),
   AuthController.doctorVerifyEmail
+);
+router.post(
+  '/doctor-resend-otp',
+  AuthController.doctorResendOtp
 );
 
 router.post(
@@ -44,13 +46,11 @@ router.post(
   validateRequest(AuthValidation.createChangePasswordZodSchema),
   AuthController.doctorChangePasswordToDB
 );
-
 router.get(
   '/profile',
   auth(USER_ROLES.DOCTOR),
   DoctorController.getDoctorProfile
 );
-
 router.patch(
   '/update-profile',
   auth(USER_ROLES.DOCTOR),
@@ -58,13 +58,11 @@ router.patch(
   validateRequest(DoctorValidation.updateDoctorZodSchema),
   DoctorController.updateDoctorProfile
 );
-
 router.patch(
   '/approve-doctor/:id',
   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
   DoctorController.updateDoctorApprovedStatus
 );
-
 router.get(
   '/',
   auth(
@@ -75,11 +73,9 @@ router.get(
   ),
   DoctorController.getAllDoctors
 );
-
 router.get(
   '/:id',
   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.DOCTOR),
   DoctorController.getSingleDoctor
 );
-
 export const DoctorRoutes = router;

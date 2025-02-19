@@ -44,6 +44,30 @@ const doctorForgetPasswordToDB = catchAsync(
     });
   }
 );
+const userResendOtp = catchAsync(async (req: Request, res: Response) => {
+  const email = req.body.uniqueId;
+
+  const result = await AuthService.userResendOtp(email);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Please check your email, we sent an OTP!',
+    data: result,
+  });
+});
+const doctorResendOtp = catchAsync(async (req: Request, res: Response) => {
+  const uniqueId = req.body.uniqueId;
+
+  const result = await AuthService.doctorResendOtp(uniqueId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Please check your email, we sent an OTP!',
+    data: result,
+  });
+});
 
 const userForgetPasswordToDB = catchAsync(
   async (req: Request, res: Response) => {
@@ -154,4 +178,6 @@ export const AuthController = {
   userChangePasswordToDB,
   userNewAccessTokenToUser,
   newAccessTokenToUser,
+  userResendOtp,
+  doctorResendOtp,
 };

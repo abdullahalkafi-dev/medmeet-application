@@ -84,7 +84,7 @@ const doctorForgetPasswordToDB = async (uniqueId: string) => {
 const userVerifyEmailToDB = async (payload: IVerifyEmail) => {
   console.log(payload);
   const { uniqueId, oneTimeCode } = payload;
-  if(!uniqueId||!oneTimeCode){
+  if (!uniqueId || !oneTimeCode) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Please provide email and otp');
   }
   const isExistUser = await User.findOne({ email: uniqueId }).select(
@@ -102,7 +102,7 @@ const userVerifyEmailToDB = async (payload: IVerifyEmail) => {
     );
   }
 
-  console.log( oneTimeCode);
+  console.log(oneTimeCode);
   if (isExistUser.authentication?.oneTimeCode !== oneTimeCode) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'You provided wrong otp');
   }
@@ -143,6 +143,71 @@ const userVerifyEmailToDB = async (payload: IVerifyEmail) => {
 
   return { data, message };
 };
+
+//resent otp
+const userResendOtp = async (uniqueId: string) => {
+  const isExistUser = await User.findOne({ email: uniqueId });
+  if (!isExistUser) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+  }
+
+  //send mail
+  const otp = generateOTP();
+  const value = {
+    otp,
+    email: isExistUser.email,
+  };
+  const verifyUserMail = emailTemplate.createAccount({
+    ...value,
+    name: isExistUser.name,
+  });
+
+  emailHelper.sendEmail(verifyUserMail);
+
+  //save to DB
+  const authentication = {
+    oneTimeCode: otp,
+    expireAt: new Date(Date.now() + 3 * 6000000),
+  };
+  console.log;
+  await User.findOneAndUpdate(
+    { email: uniqueId },
+    { $set: { authentication } }
+  );
+};
+const doctorResendOtp = async (uniqueId: string) => {
+  const isExistUser = await Doctor.findOne({
+    $or: [{ email: uniqueId }, { doctorId: uniqueId }],
+  });
+  if (!isExistUser) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "Doctor doesn't exist!");
+  }
+
+  //send mail
+  const otp = generateOTP();
+  const value = {
+    otp,
+    email: isExistUser.email,
+  };
+  const verifyDoctorMail = emailTemplate.createAccount({
+    ...value,
+    name: isExistUser.name,
+  });
+
+  emailHelper.sendEmail(verifyDoctorMail);
+
+  //save to DB
+  const authentication = {
+    oneTimeCode: otp,
+    expireAt: new Date(Date.now() + 3 * 6000000),
+  };
+  console.log;
+  await Doctor.findOneAndUpdate(
+    { email: uniqueId },
+    { $set: { authentication } }
+  );
+};
+
 //verify doctor email
 const doctorVerifyEmailToDB = async (payload: IVerifyEmail) => {
   console.log(payload);
@@ -491,4 +556,6 @@ export const AuthService = {
   doctorChangePasswordToDB,
   userResetPasswordToDB,
   doctorResetPasswordToDB,
+  userResendOtp,
+  doctorResendOtp,
 };

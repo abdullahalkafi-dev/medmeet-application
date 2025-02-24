@@ -138,6 +138,16 @@ const updateDoctorApprovedStatus = catchAsync(
     });
   }
 );
+const deleteDoctor = catchAsync(async (req: Request, res: Response) => {
+  const result = await DoctorService.deleteDoctor(req.params.id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Doctor deleted successfully',
+    data: result,
+  });
+});
 
 export const DoctorController = {
   createDoctorToDB,
@@ -147,4 +157,5 @@ export const DoctorController = {
   getSingleDoctor,
   loginDoctor,
   updateDoctorApprovedStatus,
+  deleteDoctor,
 };

@@ -33,10 +33,7 @@ router.post(
   validateRequest(AuthValidation.createVerifyEmailZodSchema),
   AuthController.userVerifyEmailToDB
 );
-router.post(
-  '/user-resend-otp',
-  AuthController.userResendOtp
-);
+router.post('/user-resend-otp', AuthController.userResendOtp);
 router.post(
   '/reset-password',
   validateRequest(AuthValidation.createResetPasswordZodSchema),
@@ -76,4 +73,9 @@ router.get(
   UserController.getSingleUser
 );
 
+router.delete(
+  '/:id',
+  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.USER),
+  UserController.deleteUser
+);
 export const UserRoutes = router;

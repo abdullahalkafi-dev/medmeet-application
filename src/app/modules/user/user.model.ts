@@ -32,7 +32,7 @@ const userSchema = new Schema<TUser, UserModal>(
       enum: ['male', 'female'],
     },
     dob: {
-      type: String,
+      type: Date,
     },
     country: {
       type: String,

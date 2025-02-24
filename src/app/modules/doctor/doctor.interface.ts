@@ -8,7 +8,7 @@ export type TDoctor = {
   phoneNumber: string; // unique
 
   gender: 'male' | 'female';
-  dob?: string; //dd/mm/yyyy
+  dob?: Date; //dd/mm/yyyy
   country: string;
   doctorId: string;
   specialist: Types.ObjectId;
@@ -25,7 +25,7 @@ export type TDoctor = {
   password: string;
   status: 'active' | 'delete';
   verified?: boolean;
-  approvedStatus?: "pending" | "approved" | "rejected";
+  approvedStatus?: 'pending' | 'approved' | 'rejected';
   isAllFieldsFilled?: boolean;
   authentication?: {
     isResetPassword: boolean;

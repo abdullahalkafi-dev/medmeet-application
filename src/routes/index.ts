@@ -18,6 +18,7 @@ import { CategoryRoutes } from '../app/modules/category/category.route';
 import { SettingRoutes } from '../app/modules/setting/setting.route';
 import { MedicineRoutes } from '../app/modules/medicine/medicine.route';
 import { DoctorScheduleRouter } from '../app/modules/doctorSchedule/doctorSchema.router';
+import { AppointmentRouter } from '../app/modules/appointment/appointment.route';
 
 const router = express.Router();
 
@@ -28,6 +29,7 @@ const apiRoutes = [
   { path: '/setting', route: SettingRoutes },
   { path: '/medicine', route: MedicineRoutes },
    { path: '/schedule', route: DoctorScheduleRouter },
+   { path: '/appointment', route: AppointmentRouter },
   // { path: '/auth', route: AuthRoutes },
   // { path: '/admin', route: AdminRoutes },
 

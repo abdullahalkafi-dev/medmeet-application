@@ -8,6 +8,7 @@ import config from '../../../config';
 import { QueryBuilder } from '../../builder/QueryBuilder';
 import { TUser, UserModal } from './user.interface';
 import { User } from './user.model';
+import { USER_ROLES } from '../../../enums/user';
 
 const createUserToDB = async (payload: Partial<TUser>) => {
   // Validate required fields
@@ -26,7 +27,10 @@ const createUserToDB = async (payload: Partial<TUser>) => {
 const loginUser = async (payload: Partial<TUser> & { uniqueId: string }) => {
   const { uniqueId, password } = payload;
   if (!uniqueId || !password) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Please provide email and password');
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Please provide email and password'
+    );
   }
   const user = await User.findOne({
     email: uniqueId,
@@ -89,6 +93,9 @@ const updateUserProfileToDB = async (
   ) {
     unlinkFile(isExistUser.image);
   }
+  if(payload.dob){
+    payload.dob = new Date(payload.dob);
+  }
 
   const updateDoc = await User.findOneAndUpdate({ _id: id }, payload, {
     new: true,
@@ -133,6 +140,25 @@ const getAllUsers = async (query: Record<string, unknown>) => {
   return { result, meta };
 };
 
+const deleteUser = async (id: string) => {
+  const result = await User.findByIdAndUpdate(
+    id,
+    { status: 'delete' },
+    { new: true }
+  );
+  if (!result) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+  }
+  if (result.role === USER_ROLES.SUPER_ADMIN) {
+    await User.findByIdAndUpdate(id, { status: 'active' }, { new: true });
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      "You can't delete super admin!"
+    );
+  }
+  return result;
+};
+
 export const UserService = {
   getUserProfileFromDB,
   updateUserProfileToDB,
@@ -140,4 +166,5 @@ export const UserService = {
   createUserToDB,
   getAllUsers,
   loginUser,
+  deleteUser,
 };

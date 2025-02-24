@@ -20,7 +20,6 @@ const createUserToDB = catchAsync(
 );
 
 const loginUser = catchAsync(async (req: Request, res: Response) => {
-
   const { uniqueId, password } = req.body;
   const user = await UserService.loginUser({ uniqueId, password });
 
@@ -91,6 +90,17 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  const result = await UserService.deleteUser(req.params.id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'User deleted successfully',
+    data: result,
+  });
+});
+
 export const UserController = {
   createUserToDB,
   getUserProfile,
@@ -98,4 +108,5 @@ export const UserController = {
   getAllUsers,
   getSingleUser,
   loginUser,
+  deleteUser,
 };

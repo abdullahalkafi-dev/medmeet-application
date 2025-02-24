@@ -44,7 +44,12 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
     },
 
     filename: (req, file, cb) => {
-      const fileExt = file.fieldname === 'medicalLicense' ? '.pdf' : '.png'; // Force .png for images and .pdf for certificates
+      const fileExt =
+        file.fieldname === 'medicalLicense' ||
+        file.fieldname === 'doc' ||
+        file.fieldname === 'docs'
+          ? '.pdf'
+          : '.png'; // Force .png for images and .pdf for certificates
       const date = new Date();
       const formattedDate = `${date.getDate()}-${
         date.getMonth() + 1
@@ -129,12 +134,12 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
     storage: storage,
     fileFilter: filterFilter,
   }).fields([
-    { name: 'image', maxCount: 3 },
-    { name: 'media', maxCount: 3 },
-    { name: 'doc', maxCount: 3 },
-    { name: 'professionalIdFront', maxCount: 3 },
-    { name: 'professionalIdBack', maxCount: 3 },
-    { name: 'medicalLicense', maxCount: 3 },
+    { name: 'image', maxCount: 10 },
+    { name: 'media', maxCount: 10 },
+    { name: 'doc', maxCount: 10 },
+    { name: 'professionalIdFront', maxCount: 10 },
+    { name: 'professionalIdBack', maxCount: 10 },
+    { name: 'medicalLicense', maxCount: 10 },
   ]);
 
   return upload(req, res, next);

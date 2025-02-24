@@ -55,9 +55,8 @@ const bookAppointmentZodSchema = z.object({
       .refine(isValidFutureDate, {
         message: 'Date must be in DD-MM-YYYY format and must be in the future',
       }),
-    slotIndex: z
-      .number({ required_error: 'Slot index is required' })
-      .nonnegative(),
+    startTime: z.string({ required_error: 'Start time is required' }),
+    endTime: z.string({ required_error: 'End time is required' }),
     userId: z.string({ required_error: 'User ID is required' }),
   }),
 });

@@ -1,6 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
 import { JwtPayload, Secret } from 'jsonwebtoken';
-
 import { TDoctor } from './doctor.interface';
 import { Doctor } from './doctor.model';
 import unlinkFile from '../../../shared/unlinkFile';
@@ -8,6 +7,7 @@ import AppError from '../../errors/AppError';
 import { jwtHelper } from '../../../helpers/jwtHelper';
 import config from '../../../config';
 import { QueryBuilder } from '../../builder/QueryBuilder';
+import { Appointment } from '../appointment/appointment.model';
 
 const createDoctorToDB = async (payload: Partial<TDoctor>) => {
   // Validate required fields
@@ -33,6 +33,7 @@ const loginDoctor = async (
   if (!doctor) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Doctor not found');
   }
+
   const isMatch = await Doctor.isMatchPassword(password!, doctor.password);
   if (!isMatch) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid credentials');
@@ -45,7 +46,7 @@ const loginDoctor = async (
       approvedStatus: doctor.approvedStatus,
     },
     config.jwt.jwt_secret as Secret,
-    '60d'
+    '90d'
   );
   //create token
   const refreshToken = jwtHelper.createToken(
@@ -66,7 +67,6 @@ const getDoctorProfileFromDB = async (
   if (!isExistDoctor) {
     throw new AppError(StatusCodes.BAD_REQUEST, "Doctor doesn't exist!");
   }
-
   return isExistDoctor;
 };
 
@@ -75,7 +75,7 @@ const updateDoctorProfileToDB = async (
   payload: Partial<TDoctor>
 ): Promise<Partial<TDoctor | null>> => {
   const { id } = doctorId;
-  console.log(payload.name);
+
   const isExistDoctor = await Doctor.isExistDoctorById(id);
   if (!isExistDoctor) {
     throw new AppError(StatusCodes.BAD_REQUEST, "Doctor doesn't exist!");
@@ -100,7 +100,13 @@ const updateDoctorProfileToDB = async (
   if (payload.medicalLicense && isExistDoctor.medicalLicense) {
     unlinkFile(isExistDoctor.medicalLicense);
   }
-
+  if (payload.dob) {
+    const [day, month, year] = payload.dob
+      .toISOString()
+      .split('T')[0]
+      .split('-');
+    payload.dob = new Date(`${year}-${month}-${day}`);
+  }
   const updateDoc = await Doctor.findOneAndUpdate({ _id: id }, payload, {
     new: true,
     upsert: true,
@@ -129,8 +135,33 @@ const updateDoctorProfileToDB = async (
 
   return updateDoc;
 };
-const getSingleDoctor = async (id: string): Promise<TDoctor | null> => {
-  const result = await Doctor.findById(id).populate('specialist');
+const getSingleDoctor = async (id: string) => {
+  const doctor = await Doctor.findById(id).populate('specialist').lean();
+
+  const reviews = await Appointment.find({ doctor: id })
+    .populate({
+      path: 'user',
+      select: 'name country image',
+    })
+    .select('review')
+    .lean();
+
+  
+
+  const result = {
+    ...doctor,
+    reviews: reviews.map((review: any) => ({
+      rating: review.review.rating,
+      review: review.review.review,
+      createdAt: review.review.createdAt,
+      _id: review._id,
+      name: review.user.name,
+      country: review.user.country,
+      image: review.user.image,
+    })),
+  };
+  console.log(result);
+
   return result;
 };
 //get all doctors
@@ -148,7 +179,6 @@ const getAllDoctors = async (query: any) => {
   const meta = await doctorQuery.countTotal();
   return { result, meta };
 };
-
 const updateDoctorApprovedStatus = async (
   id: string,
   payload: { status: string }
@@ -168,7 +198,14 @@ const updateDoctorApprovedStatus = async (
   );
   return updatedDoctor;
 };
-
+const deleteDoctor = async (id: string) => {
+  const result = await Doctor.findByIdAndUpdate(
+    id,
+    { status: 'delete' },
+    { new: true }
+  );
+  return result;
+};
 export const DoctorService = {
   getDoctorProfileFromDB,
   updateDoctorProfileToDB,
@@ -177,4 +214,5 @@ export const DoctorService = {
   getAllDoctors,
   loginDoctor,
   updateDoctorApprovedStatus,
+  deleteDoctor,
 };

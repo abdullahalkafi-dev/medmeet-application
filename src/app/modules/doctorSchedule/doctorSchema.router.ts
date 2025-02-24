@@ -9,21 +9,11 @@ const router = Router();
 
 router.post(
   '/create',
-  auth(USER_ROLES.DOCTOR,USER_ROLES.ADMIN,USER_ROLES.SUPER_ADMIN),
+  auth(USER_ROLES.DOCTOR, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   validateRequest(DoctorScheduleValidation.createDoctorScheduleZodSchema),
   DoctorScheduleController.createDoctorSchedule
 );
 router.get('/doctor/:doctorId', DoctorScheduleController.getDoctorSchedules);
 router.get('/available-slots', DoctorScheduleController.getAvailableSlots);
-router.post(
-  '/book',
-  validateRequest(DoctorScheduleValidation.bookAppointmentZodSchema),
-  DoctorScheduleController.bookAppointment
-);
-router.post(
-  '/cancel',
-  validateRequest(DoctorScheduleValidation.cancelAppointmentZodSchema),
-  DoctorScheduleController.cancelAppointment
-);
 
 export const DoctorScheduleRouter = router;

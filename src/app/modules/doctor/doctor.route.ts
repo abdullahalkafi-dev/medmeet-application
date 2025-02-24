@@ -30,10 +30,7 @@ router.post(
   validateRequest(AuthValidation.createVerifyEmailZodSchema),
   AuthController.doctorVerifyEmail
 );
-router.post(
-  '/doctor-resend-otp',
-  AuthController.doctorResendOtp
-);
+router.post('/doctor-resend-otp', AuthController.doctorResendOtp);
 
 router.post(
   '/reset-password',
@@ -75,7 +72,17 @@ router.get(
 );
 router.get(
   '/:id',
-  auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN, USER_ROLES.DOCTOR),
+  auth(
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.ADMIN,
+    USER_ROLES.DOCTOR,
+    USER_ROLES.USER
+  ),
   DoctorController.getSingleDoctor
+);
+router.delete(
+  '/:id',
+  auth(USER_ROLES.DOCTOR, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  DoctorController.deleteDoctor
 );
 export const DoctorRoutes = router;

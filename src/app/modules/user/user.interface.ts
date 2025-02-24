@@ -7,7 +7,7 @@ export type TUser = {
   email: string; // unique
   phoneNumber: string; // unique
   gender: 'male' | 'female';
-  dob?: string; //dd/mm/yyyy
+  dob?: Date; //dd/mm/yyyy
   country: string;
   image?: string;
   subscription: boolean;

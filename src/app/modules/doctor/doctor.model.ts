@@ -28,7 +28,7 @@ const doctorSchema = new Schema<TDoctor, DoctorModal>(
       enum: ['male', 'female'],
     },
     dob: {
-      type: String,
+      type: Date,
     },
     country: {
       type: String,

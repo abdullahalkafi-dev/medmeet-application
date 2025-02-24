@@ -26,7 +26,13 @@ const updateUserZodSchema = z.object({
 
       phoneNumber: z.string().optional(),
       gender: z.enum(['male', 'female']).optional(),
-      dob: z.string().optional(),
+      dob: z
+        .string()
+        .regex(
+          /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-\d{4}$/,
+          'Date of birth must be in DD-MM-YYYY format'
+        )
+        .optional(),
       country: z.string().optional(),
       image: z.string().optional(),
       subscription: z.boolean().optional(),
@@ -55,7 +61,6 @@ const loginZodSchema = z.object({
 });
 
 export const UserValidation = {
-
   createUserZodSchema,
   updateUserZodSchema,
   loginZodSchema,

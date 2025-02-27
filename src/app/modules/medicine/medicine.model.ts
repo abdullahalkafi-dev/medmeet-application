@@ -5,6 +5,7 @@ const medicineSchema = new Schema<TMedicine>({
   name: {
     type: String,
     required: true,
+    index: true,
   },
 });
 export const Medicine = model<TMedicine>('Medicine', medicineSchema);

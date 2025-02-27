@@ -53,7 +53,7 @@ router.get(
   UserController.getUserProfile
 );
 
-router.patch(
+router.post(
   '/update-profile',
   auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   fileUploadHandler,

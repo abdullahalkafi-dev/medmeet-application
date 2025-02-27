@@ -17,7 +17,7 @@ export type TAppointment = {
   };
   patientDetails: TPatientDetails;
   prescription?: string;
-  doctorNotes?: string;
+  doctorNote?: string;
   isNoteHidden?: boolean;
   attachmentImage?: string[];
   review: {

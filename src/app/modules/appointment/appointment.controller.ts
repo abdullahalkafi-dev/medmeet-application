@@ -64,9 +64,109 @@ const reviewAppointment = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getAllUserPrescriptions = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.params.userId;
+
+    const result = await AppointmentServices.getAllUserPrescriptions(userId);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'User prescriptions fetched successfully',
+      data: result,
+    });
+  }
+);
+
+const addNoteToAppointment = catchAsync(async (req: Request, res: Response) => {
+  const appointmentId = req.params.id;
+  const payload = req.body;
+  const result = await AppointmentServices.addNoteToAppointment(
+    appointmentId,
+    payload
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Note added to appointment successfully',
+    data: result,
+  });
+});
+
+const toggleIsNoteHidden = catchAsync(async (req: Request, res: Response) => {
+  const appointmentId = req.params.id;
+  const result = await AppointmentServices.toggleIsNoteHidden(appointmentId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Note visibility toggled successfully',
+    data: result,
+  });
+});
+
+const addPrescriptionToAppointment = catchAsync(
+  async (req: Request, res: Response) => {
+    const appointmentId = req.params.id;
+
+    const result = await AppointmentServices.addPrescriptionToAppointment(
+      appointmentId,
+      req
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Prescription added to appointment successfully',
+      data: result,
+    });
+  }
+);
+
+const appointmentStatusUpdate = catchAsync(
+  async (req: Request, res: Response) => {
+    const appointmentId = req.params.id;
+    const status = req.body.status;
+
+    const result = await AppointmentServices.appointmentStatusUpdate(
+      appointmentId,
+      status
+    );
+
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Appointment status updated successfully',
+      data: result,
+    });
+  }
+);
+const doctorAppointments = catchAsync(async (req: Request, res: Response) => {
+  const status = req.query.status as string;
+  const result = await AppointmentServices.doctorAppointments(
+    req.params.doctorId,
+    status
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Doctors appointments fetched successfully',
+    data: result,
+  });
+});
+
 export const AppointmentControllers = {
   bookAppointment,
   getUserAppointments,
   getAppointmentDetails,
   reviewAppointment,
+  getAllUserPrescriptions,
+  addNoteToAppointment,
+  toggleIsNoteHidden,
+  addPrescriptionToAppointment,
+  appointmentStatusUpdate,
+  doctorAppointments,
 };

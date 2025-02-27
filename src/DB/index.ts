@@ -15,7 +15,7 @@ const superUser: TUser = {
   address: 'N/A',
   phoneNumber: 'N/A',
   country: 'N/A',
-  gender: 'male',
+  gender: 'Male',
   subscription: true,
   isAllFieldsFilled: true,
   dob: new Date('01-01-2000'),

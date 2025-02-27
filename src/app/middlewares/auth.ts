@@ -27,7 +27,7 @@ const auth =
         req.user = verifyUser;
         console.log(req.user);
          
-
+         
         //guard user
         if (roles.length && !roles.includes(verifyUser.role)) {
           throw new AppError(

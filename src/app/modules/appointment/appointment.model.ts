@@ -25,14 +25,14 @@ const appointmentSchema = new Schema<TAppointment>(
       problemDescription: { type: String, required: true },
     },
     prescription: { type: String },
-    doctorNotes: { type: String },
+    doctorNote: { type: String , default: ''},
     attachmentImage: { type: [String], default: [] }, // Store multiple image URLs
     attachmentPdf: { type: [String], default: [] }, // Store multiple PDF URLs
     isNoteHidden: { type: Boolean, default: true },
     review: {
-      rating: { type: Number, required: true, min: 1, max: 5 },
-      review: { type: String, required: true },
-      createdAt: { type: Date, required: true },
+      rating: { type: Number, min: 1, max: 5 },
+      review: { type: String },
+      createdAt: { type: Date },
     },
     status: {
       type: String,

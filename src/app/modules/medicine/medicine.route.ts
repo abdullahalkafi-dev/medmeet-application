@@ -27,7 +27,7 @@ router.delete(
   auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   MedicineController.deleteMedicine
 );
-router.patch(
+router.post(
   '/update-medicine/:id',
   auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   validateRequest(MedicineValidation.updateMedicineZodValidation),

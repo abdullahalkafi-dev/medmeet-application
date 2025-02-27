@@ -25,7 +25,7 @@ const updateUserZodSchema = z.object({
       email: z.string().optional(),
 
       phoneNumber: z.string().optional(),
-      gender: z.enum(['male', 'female']).optional(),
+      gender: z.enum(['Male', 'Female']).optional(),
       dob: z
         .string()
         .regex(

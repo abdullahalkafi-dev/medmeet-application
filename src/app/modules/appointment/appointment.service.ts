@@ -4,6 +4,7 @@ import { Appointment } from './appointment.model';
 import { DoctorSchedule } from '../doctorSchedule/doctorSchedule.model';
 import AppError from '../../errors/AppError';
 import { User } from '../user/user.model';
+import { Doctor } from '../doctor/doctor.model';
 
 const bookAppointment = async (req: any) => {
   const appointmentData = JSON.parse(req.body.data); // Parse JSON data from form-data
@@ -186,21 +187,25 @@ const getAppointmentDetails = async (id: string) => {
           phoneNumber: '$userDetails.phoneNumber',
           image: '$userDetails.image',
         },
-
+        prescription: 1,
+        doctorNote: 1,
         patientDetails: 1,
         attachmentImage: 1,
         attachmentPdf: 1,
+        review: 1,
         status: 1,
       },
     },
   ]);
-  console.log(appointments);
+  const appointment = appointments[0];
+  if (!appointment.review) {
+    appointment.review = null;
+  }
 
-  return appointments[0];
+  return appointment;
 };
 
 const reviewAppointment = async (id: string, userId: string, payload: any) => {
-  console.log(id, userId, payload);
   const isValidUserForReview = await Appointment.findOne({
     _id: id,
     user: userId,
@@ -221,8 +226,180 @@ const reviewAppointment = async (id: string, userId: string, payload: any) => {
   if (!appointment) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Appointment not found');
   }
+  const avgRating = await Appointment.aggregate([
+    {
+      $match: { doctor: appointment.doctor },
+    },
+    {
+      $group: {
+        _id: null,
+        avgRating: { $avg: '$review.rating' },
+      },
+    },
+  ]);
+
+  const newAvgRating = avgRating[0]?.avgRating
+    ? parseFloat(avgRating[0].avgRating.toFixed(1))
+    : 0;
+
+  await Doctor.findByIdAndUpdate(appointment.doctor, {
+    avgRating: newAvgRating,
+  });
+  return appointment;
+};
+
+const getAllUserPrescriptions = async (userId: string) => {
+  const appointments = await Appointment.aggregate([
+    { $match: { user: new Types.ObjectId(userId) } },
+    {
+      $lookup: {
+        from: 'doctors',
+        localField: 'doctor',
+        foreignField: '_id',
+        as: 'doctorDetails',
+      },
+    },
+    { $unwind: '$doctorDetails' },
+    {
+      $lookup: {
+        from: 'categories',
+        localField: 'doctorDetails.specialist',
+        foreignField: '_id',
+        as: 'specialistDetails',
+      },
+    },
+    { $unwind: '$specialistDetails' },
+    {
+      $project: {
+        _id: 1,
+
+        name: '$doctorDetails.name',
+        image: '$doctorDetails.image',
+        specialist: '$specialistDetails.name',
+        avgRating: '$doctorDetails.avgRating',
+        consultationFee: '$doctorDetails.consultationFee',
+        date: 1,
+        startTime: '$slot.startTime',
+        endTime: '$slot.endTime',
+
+        status: 1,
+        prescription: 1,
+        notes: 1,
+      },
+    },
+  ]);
+
+  return appointments;
+};
+const addNoteToAppointment = async (
+  appointmentId: string,
+  note: { note: string }
+) => {
+  const appointment = await Appointment.findByIdAndUpdate(
+    appointmentId,
+    { doctorNote: note.note },
+    { new: true, upsert: true }
+  );
 
   return appointment;
+};
+const toggleIsNoteHidden = async (appointmentId: string) => {
+  const appointment = await Appointment.findById(appointmentId);
+  if (!appointment) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Appointment not found');
+  }
+  appointment.isNoteHidden = !appointment.isNoteHidden;
+  await appointment.save();
+  return appointment;
+};
+
+const addPrescriptionToAppointment = async (
+  appointmentId: string,
+  req: any
+) => {
+  let attachmentPdf;
+
+  if (req.files.doc) {
+    attachmentPdf = `/docs/${req.files.doc[0].filename}`;
+  }
+
+  console.log(attachmentPdf);
+  const appointment = await Appointment.findByIdAndUpdate(
+    appointmentId,
+    { prescription: attachmentPdf },
+    { new: true, upsert: true }
+  );
+  return appointment;
+};
+
+const appointmentStatusUpdate = async (
+  appointmentId: string,
+  status: string
+) => {
+  const appointment = await Appointment.findByIdAndUpdate(
+    appointmentId,
+    { status },
+    { new: true }
+  );
+  return appointment;
+};
+
+const doctorAppointments = async (doctorId: string, status: string) => {
+  if (!doctorId) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Doctor Id is required');
+  }
+
+  let queries: any[] = [{ doctor: new Types.ObjectId(doctorId) }];
+  if (status) {
+    queries.push({ status: status });
+  }
+  const appointments = await Appointment.aggregate([
+    { $match: { $and: queries } },
+    {
+      $lookup: {
+        from: 'doctors',
+        localField: 'doctor',
+        foreignField: '_id',
+        as: 'doctorDetails',
+      },
+    },
+    { $unwind: '$doctorDetails' },
+    {
+      $lookup: {
+        from: 'doctorschedules',
+        localField: 'schedule',
+        foreignField: '_id',
+        as: 'scheduleDetails',
+      },
+    },
+    { $unwind: '$scheduleDetails' },
+    {
+      $lookup: {
+        from: 'categories',
+        localField: 'doctorDetails.specialist',
+        foreignField: '_id',
+        as: 'specialistDetails',
+      },
+    },
+    { $unwind: '$specialistDetails' },
+    {
+      $project: {
+        _id: 1,
+
+        name: '$doctorDetails.name',
+        image: '$doctorDetails.image',
+        specialist: '$specialistDetails.name',
+
+        date: '$scheduleDetails.date',
+
+        startTime: '$slot.startTime',
+        endTime: '$slot.endTime',
+        status: 1,
+      },
+    },
+  ]);
+
+  return appointments;
 };
 
 export const AppointmentServices = {
@@ -230,4 +407,10 @@ export const AppointmentServices = {
   getUserAppointments,
   getAppointmentDetails,
   reviewAppointment,
+  getAllUserPrescriptions,
+  addNoteToAppointment,
+  toggleIsNoteHidden,
+  addPrescriptionToAppointment,
+  appointmentStatusUpdate,
+  doctorAppointments,
 };

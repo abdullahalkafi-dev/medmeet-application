@@ -25,7 +25,7 @@ const doctorSchema = new Schema<TDoctor, DoctorModal>(
     },
     gender: {
       type: String,
-      enum: ['male', 'female'],
+      enum: ['Male', 'Female'],
     },
     dob: {
       type: Date,
@@ -70,6 +70,10 @@ const doctorSchema = new Schema<TDoctor, DoctorModal>(
     },
     subscription: {
       type: Boolean,
+    },
+    avgRating: {
+      type: Number,
+      default: 0,
     },
     password: {
       type: String,

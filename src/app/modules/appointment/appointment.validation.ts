@@ -68,9 +68,25 @@ const reviewValidation = z.object({
     }),
   }),
 });
+const addNoteValidation = z.object({
+  body: z.object({
+    note: z.string({ required_error: 'Note is required' }),
+  }),
+});
+
+const appointmentStatusUpdateValidation = z.object({
+  body: z.object({
+    status: z.enum(['Upcoming', 'Completed', 'Cancelled'], {
+      required_error: 'Status is required',
+    }),
+  }),
+});
 
 export const AppointmentValidation = {
   createAppointmentZodSchema,
   updateAppointmentZodSchema,
   reviewValidation,
+  addNoteValidation,
+  appointmentStatusUpdateValidation
+ 
 };

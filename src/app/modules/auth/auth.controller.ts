@@ -44,11 +44,10 @@ const doctorForgetPasswordToDB = catchAsync(
     });
   }
 );
+
 const userResendOtp = catchAsync(async (req: Request, res: Response) => {
   const email = req.body.uniqueId;
-
   const result = await AuthService.userResendOtp(email);
-
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -58,9 +57,7 @@ const userResendOtp = catchAsync(async (req: Request, res: Response) => {
 });
 const doctorResendOtp = catchAsync(async (req: Request, res: Response) => {
   const uniqueId = req.body.uniqueId;
-
   const result = await AuthService.doctorResendOtp(uniqueId);
-
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
@@ -82,13 +79,11 @@ const userForgetPasswordToDB = catchAsync(
     });
   }
 );
-
 const doctorResetPasswordToDB = catchAsync(
   async (req: Request, res: Response) => {
     const token = req.headers.authorization;
     const { ...resetData } = req.body;
     const result = await AuthService.doctorResetPasswordToDB(token!, resetData);
-
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
@@ -113,7 +108,6 @@ const userResetPasswordToDB = catchAsync(
     });
   }
 );
-
 const doctorChangePasswordToDB = catchAsync(
   async (req: Request, res: Response) => {
     const user = req.user;

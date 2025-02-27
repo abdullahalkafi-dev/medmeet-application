@@ -25,8 +25,9 @@ const updateDoctorZodSchema = z.object({
       email: z.string().optional(),
       doctorId: z.string().optional(),
       phoneNumber: z.string().optional(),
-      gender: z.enum(['male', 'female']).optional(),
+      gender: z.enum(['Male', 'Female']).optional(),
       dob: z
+      
         .string()
         .regex(
           /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-\d{4}$/,

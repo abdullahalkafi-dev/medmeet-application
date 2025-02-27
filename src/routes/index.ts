@@ -1,7 +1,6 @@
 import express from 'express';
 
 
-import { AdminRoutes } from '../app/modules/admin/admin.routes';
 
 import { FaqRoutes } from '../app/modules/Faq/Faq.route';
 import { ReviewRoutes } from '../app/modules/review/review.route';
@@ -19,6 +18,7 @@ import { SettingRoutes } from '../app/modules/setting/setting.route';
 import { MedicineRoutes } from '../app/modules/medicine/medicine.route';
 import { DoctorScheduleRouter } from '../app/modules/doctorSchedule/doctorSchema.router';
 import { AppointmentRouter } from '../app/modules/appointment/appointment.route';
+import { MedicalRecordRoutes } from '../app/modules/medicalRecord/medicalRecord.route';
 
 const router = express.Router();
 
@@ -28,10 +28,10 @@ const apiRoutes = [
   { path: '/category', route: CategoryRoutes },
   { path: '/setting', route: SettingRoutes },
   { path: '/medicine', route: MedicineRoutes },
-   { path: '/schedule', route: DoctorScheduleRouter },
-   { path: '/appointment', route: AppointmentRouter },
-  // { path: '/auth', route: AuthRoutes },
-  // { path: '/admin', route: AdminRoutes },
+  { path: '/schedule', route: DoctorScheduleRouter },
+  { path: '/appointment', route: AppointmentRouter },
+  { path: '/medical-record', route: MedicalRecordRoutes },
+  
 
   // { path: '/faq', route: FaqRoutes },
   // { path: '/review', route: ReviewRoutes },

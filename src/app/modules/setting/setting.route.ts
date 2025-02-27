@@ -20,8 +20,8 @@ router.get(
   SettingController.getSettings
 );
 
-router.patch(
-  '/',
+router.post(
+  '/update-setting',
   auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), // Assuming only admins can update settings
   validateRequest(SettingValidation.updateSettingZodSchema), // Assuming you have a validation schema
   SettingController.updateSetting

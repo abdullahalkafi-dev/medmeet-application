@@ -18,7 +18,7 @@ router.get('/', FaqController.getAllFaq);
 
 router.get('/:id', FaqController.getSingleFaq);
 
-router.patch(
+router.post(
   '/:id',
   auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   validateRequest(FaqValidation.updatedFaqSchema),

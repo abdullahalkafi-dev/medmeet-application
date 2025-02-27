@@ -23,6 +23,19 @@ router.get(
   AppointmentControllers.getUserAppointments
 );
 router.get(
+  '/prescriptions/:userId',
+  auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  AppointmentControllers.getAllUserPrescriptions
+);
+
+router.get(
+  '/doctor/:doctorId',
+  
+  auth(USER_ROLES.DOCTOR, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  AppointmentControllers.doctorAppointments
+);
+
+router.get(
   '/:id',
   auth(
     USER_ROLES.USER,
@@ -38,5 +51,47 @@ router.post(
   validateRequest(AppointmentValidation.reviewValidation),
   AppointmentControllers.reviewAppointment
 );
+
+router.post(
+  '/note/:id',
+  auth(
+    USER_ROLES.USER,
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.DOCTOR
+  ),
+  validateRequest(AppointmentValidation.addNoteValidation),
+  AppointmentControllers.addNoteToAppointment
+);
+
+router.post(
+  '/note/toggle/:id',
+  auth(
+    USER_ROLES.USER,
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.DOCTOR
+  ),
+  AppointmentControllers.toggleIsNoteHidden
+);
+
+router.post(
+  '/prescription/:id',
+  auth(
+    USER_ROLES.USER,
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.DOCTOR
+  ),
+  fileUploadHandler,
+  AppointmentControllers.addPrescriptionToAppointment
+);
+router.post(
+  '/status/:id',
+  auth(USER_ROLES.DOCTOR, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN,USER_ROLES.USER),
+  validateRequest(AppointmentValidation.appointmentStatusUpdateValidation),
+  AppointmentControllers.appointmentStatusUpdate
+);
+ 
 
 export const AppointmentRouter = router;

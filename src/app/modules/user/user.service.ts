@@ -6,7 +6,7 @@ import AppError from '../../errors/AppError';
 import { jwtHelper } from '../../../helpers/jwtHelper';
 import config from '../../../config';
 import { QueryBuilder } from '../../builder/QueryBuilder';
-import { TUser, UserModal } from './user.interface';
+import { TUser } from './user.interface';
 import { User } from './user.model';
 import { USER_ROLES } from '../../../enums/user';
 
@@ -51,7 +51,7 @@ const loginUser = async (payload: Partial<TUser> & { uniqueId: string }) => {
       email: user.email,
     },
     config.jwt.jwt_secret as Secret,
-    '60d'
+    '90d'
   );
   //create token
   const refreshToken = jwtHelper.createToken(
@@ -79,7 +79,7 @@ const getUserProfileFromDB = async (
 const updateUserProfileToDB = async (
   userId: JwtPayload,
   payload: Partial<TUser>
-): Promise<Partial<TUser | null>> => {
+) => {
   const { id } = userId;
   const isExistUser = await User.isExistUserById(id);
   if (!isExistUser) {
@@ -93,14 +93,16 @@ const updateUserProfileToDB = async (
   ) {
     unlinkFile(isExistUser.image);
   }
-  if(payload.dob){
-    payload.dob = new Date(payload.dob);
+  if (payload.dob) {
+    const [day, month, year] = (payload.dob as any).split('-');
+    payload.dob = new Date(`${year}-${month}-${day}`);
+    console.log(payload.dob);
   }
-
   const updateDoc = await User.findOneAndUpdate({ _id: id }, payload, {
     new: true,
     upsert: true,
   });
+  let finalUserDocument;
   if (
     !updateDoc.isAllFieldsFilled &&
     updateDoc &&
@@ -109,17 +111,16 @@ const updateUserProfileToDB = async (
       updateDoc.phoneNumber &&
       updateDoc.gender &&
       updateDoc.dob &&
-      updateDoc.country &&
-      updateDoc.address
+      updateDoc.country 
     )
   ) {
-    await User.findOneAndUpdate(
+    finalUserDocument = await User.findOneAndUpdate(
       { _id: id },
       { isAllFieldsFilled: true },
       { new: true }
     );
   }
-  return updateDoc;
+  return finalUserDocument ? finalUserDocument : updateDoc;
 };
 
 const getSingleUser = async (id: string): Promise<TUser | null> => {

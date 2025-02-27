@@ -50,7 +50,7 @@ const updateUserProfile = catchAsync(
     if (req.files && 'image' in req.files && req.files.image[0]) {
       image = `/images/${req.files.image[0].filename}`;
     }
-
+ console.log(req.files);
     const userData = JSON.parse(req.body.data);
     const data = {
       image,

@@ -29,7 +29,7 @@ const userSchema = new Schema<TUser, UserModal>(
     },
     gender: {
       type: String,
-      enum: ['male', 'female'],
+      enum: ['Male', 'Female'],
     },
     dob: {
       type: Date,

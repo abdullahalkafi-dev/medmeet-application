@@ -18,11 +18,14 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
       fs.mkdirSync(dirPath);
     }
   };
+  
 
   // Create filename
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       let uploadDir;
+
+
       switch (file.fieldname) {
         case 'image':
         case 'professionalIdFront':
@@ -97,6 +100,8 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
       ) {
         cb(null, true);
       } else {
+        console.log(file.fieldname);
+        console.log(file.mimetype);
         cb(
           new AppError(
             StatusCodes.BAD_REQUEST,

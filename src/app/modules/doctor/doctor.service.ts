@@ -59,15 +59,35 @@ const loginDoctor = async (
 
   return { accessToken, refreshToken, user: userWithoutPassword };
 };
-const getDoctorProfileFromDB = async (
-  doctor: JwtPayload
-): Promise<Partial<TDoctor>> => {
+const getDoctorProfileFromDB = async (doctor: JwtPayload) => {
   const { id } = doctor;
-  const isExistDoctor = await Doctor.findById(id).populate('specialist');
+  const isExistDoctor = await Doctor.findById(id).populate('specialist').lean();
   if (!isExistDoctor) {
     throw new AppError(StatusCodes.BAD_REQUEST, "Doctor doesn't exist!");
   }
-  return isExistDoctor;
+
+  const reviews = await Appointment.find({ doctor: id })
+    .populate({
+      path: 'user',
+      select: 'name country image',
+    })
+    .select('review')
+    .lean();
+  const result = {
+    ...isExistDoctor,
+
+    reviews: reviews.map((review: any) => ({
+      rating: review.review.rating,
+      review: review.review.review,
+      createdAt: review.review.createdAt,
+      _id: review._id,
+      name: review.user.name,
+      country: review.user.country,
+      image: review.user.image,
+    })),
+  };
+
+  return result;
 };
 
 const updateDoctorProfileToDB = async (
@@ -101,11 +121,9 @@ const updateDoctorProfileToDB = async (
     unlinkFile(isExistDoctor.medicalLicense);
   }
   if (payload.dob) {
-    const [day, month, year] = payload.dob
-      .toISOString()
-      .split('T')[0]
-      .split('-');
+    const [day, month, year] = (payload.dob as any).split('-');
     payload.dob = new Date(`${year}-${month}-${day}`);
+    console.log(payload.dob);
   }
   const updateDoc = await Doctor.findOneAndUpdate({ _id: id }, payload, {
     new: true,
@@ -138,29 +156,35 @@ const updateDoctorProfileToDB = async (
 const getSingleDoctor = async (id: string) => {
   const doctor = await Doctor.findById(id).populate('specialist').lean();
 
-  const reviews = await Appointment.find({ doctor: id })
+  const appointments = await Appointment.find({ doctor: id })
     .populate({
       path: 'user',
       select: 'name country image',
     })
     .select('review')
     .lean();
+  const TotalPatientsCount = new Set(
+    appointments.map((review: any) => review.user._id)
+  ).size || 0;
 
-  
+  const withReviewsAppointment = appointments.filter(
+    (appointment: any) => appointment.review
+  );
 
   const result = {
     ...doctor,
-    reviews: reviews.map((review: any) => ({
-      rating: review.review.rating,
-      review: review.review.review,
-      createdAt: review.review.createdAt,
+    TotalPatientsCount,
+
+    reviews: withReviewsAppointment.map((review: any) => ({
+      rating: review?.review?.rating,
+      review: review?.review?.review,
+      createdAt: review?.review?.createdAt,
       _id: review._id,
       name: review.user.name,
       country: review.user.country,
       image: review.user.image,
     })),
   };
-  console.log(result);
 
   return result;
 };

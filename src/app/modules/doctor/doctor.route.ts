@@ -48,14 +48,14 @@ router.get(
   auth(USER_ROLES.DOCTOR),
   DoctorController.getDoctorProfile
 );
-router.patch(
+router.post(
   '/update-profile',
   auth(USER_ROLES.DOCTOR),
   fileUploadHandler,
   validateRequest(DoctorValidation.updateDoctorZodSchema),
   DoctorController.updateDoctorProfile
 );
-router.patch(
+router.post(
   '/approve-doctor/:id',
   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
   DoctorController.updateDoctorApprovedStatus
@@ -70,6 +70,7 @@ router.get(
   ),
   DoctorController.getAllDoctors
 );
+
 router.get(
   '/:id',
   auth(

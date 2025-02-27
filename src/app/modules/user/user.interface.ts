@@ -6,7 +6,7 @@ export type TUser = {
   role: USER_ROLES;
   email: string; // unique
   phoneNumber: string; // unique
-  gender: 'male' | 'female';
+  gender: 'Male' | 'Female';
   dob?: Date; //dd/mm/yyyy
   country: string;
   image?: string;

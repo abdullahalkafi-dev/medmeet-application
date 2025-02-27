@@ -7,7 +7,7 @@ export type TDoctor = {
   email: string; // unique
   phoneNumber: string; // unique
 
-  gender: 'male' | 'female';
+  gender: 'Male' | 'Female';
   dob?: Date; //dd/mm/yyyy
   country: string;
   doctorId: string;
@@ -26,6 +26,7 @@ export type TDoctor = {
   status: 'active' | 'delete';
   verified?: boolean;
   approvedStatus?: 'pending' | 'approved' | 'rejected';
+  avgRating: number;
   isAllFieldsFilled?: boolean;
   authentication?: {
     isResetPassword: boolean;

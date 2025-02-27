@@ -16,7 +16,7 @@ router.post(
   CategoryController.createCategoryToDB
 );
 
-router.patch(
+router.post(
   '/update-category/:id',
   auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN),
   fileUploadHandler,

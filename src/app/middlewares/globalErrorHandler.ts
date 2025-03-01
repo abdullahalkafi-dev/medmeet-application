@@ -1,107 +1,3 @@
-// import { ErrorRequestHandler } from 'express';
-// import config from '../../config';
-// import AppError from '../../errors/AppError';
-// import handleValidationError from '../../errors/handleValidationError';
-// import handleZodError from '../../errors/handleZodError';
-// import { errorLogger } from '../../shared/logger';
-// import { IErrorMessage } from '../../types/errors.types';
-// import { StatusCodes } from 'http-status-codes';
-
-// const globalErrorHandler: ErrorRequestHandler = (error, req, res, next) => {
-//   console.log(`come to globalErrorHandler
-    
-//     error ${error.name}
-//     `);
-//   config.node_env === 'development'
-//     ? console.log('🚨 globalErrorHandler ~~ ', error)
-//     : errorLogger.error('🚨 globalErrorHandler ~~ ', error);
-
-//   let statusCode = 500;
-//   let message = 'Something went wrong';
-//   let errorMessages: IErrorMessage[] = [];
-
-//   if (error.name === 'ZodError') {
-//     const simplifiedError = handleZodError(error);
-//     statusCode = simplifiedError.statusCode;
-//     message = simplifiedError.message;
-//     errorMessages = simplifiedError.errorMessages;
-//   } else if (error.name === 'ValidationError') {
-//     const simplifiedError = handleValidationError(error);
-//     statusCode = simplifiedError.statusCode;
-//     message = simplifiedError.message;
-//     errorMessages = simplifiedError.errorMessages;
-//   } else if (error.name === 'JsonWebTokenError') {
-//     statusCode = StatusCodes.UNAUTHORIZED;
-//     message = 'Invalid token, please login again';
-//     errorMessages = error.message
-//       ? [
-//           {
-//             path: '',
-//             message: error.message,
-//           },
-//         ]
-//       : [];
-//   } else if (error.name === 'TokenExpiredError') {
-//     statusCode = StatusCodes.UNAUTHORIZED;
-//     message = 'Invalid token, please login again';
-//     errorMessages = error.message
-//       ? [
-//           {
-//             path: '',
-//             message: error.message,
-//           },
-//         ]
-//       : [];
-//   } else if (error.name === 'SyntaxError') {
-//     statusCode = StatusCodes.UNAUTHORIZED;
-//     message = 'Invalid JSON, please valid JSON';
-//     errorMessages = error.message
-//       ? [
-//           {
-//             path: '',
-//             message: error.message,
-//           },
-//         ]
-//       : [];
-//   } else if (error instanceof AppError) {
-//     statusCode = error.statusCode;
-//     message = error.message;
-//     errorMessages = error.message
-//       ? [
-//           {
-//             path: '',
-//             message: error.message,
-//             data: error.data,
-//           },
-//         ]
-//       : [];
-//   } else if (error instanceof Error) {
-//     message = error.message;
-//     errorMessages = error.message
-//       ? [
-//           {
-//             path: '',
-//             message: error?.message,
-//           },
-//         ]
-//       : [];
-//   }
-//       console.log({
-//         success: false,
-//         message,
-//         errorMessages,
-//         stack: config.node_env !== 'production' ? error?.stack : undefined,
-//       });
-//   res.status(statusCode).json({
-//     success: false,
-//     message,
-//     errorMessages,
-//     stack: config.node_env !== 'production' ? error?.stack : undefined,
-//   });
-// };
-
-// export default globalErrorHandler;
-
 
 
 import { ErrorRequestHandler } from "express";
@@ -116,7 +12,7 @@ import config from "../../config";
 import { TErrorSources } from "../../types/error";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
+const globalErrorHandler: ErrorRequestHandler = (err, req, res, next): any => {
   let statusCode = 500;
   let message = "Something went wrong!";
   let errorSources: TErrorSources = [

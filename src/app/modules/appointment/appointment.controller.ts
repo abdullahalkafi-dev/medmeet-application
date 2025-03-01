@@ -158,6 +158,19 @@ const doctorAppointments = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const doctorAppointmentCounts = catchAsync(async (req: Request, res: Response) => {
+  const result = await AppointmentServices.doctorAppointmentCounts(req.params.doctorId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Doctors appointments count fetched successfully',
+    data: result,
+  });
+}
+)
+
 export const AppointmentControllers = {
   bookAppointment,
   getUserAppointments,
@@ -169,4 +182,5 @@ export const AppointmentControllers = {
   addPrescriptionToAppointment,
   appointmentStatusUpdate,
   doctorAppointments,
+  doctorAppointmentCounts
 };

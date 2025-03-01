@@ -12,7 +12,7 @@ import { errorLogger, logger } from './shared/logger';
 
 //uncaught exception
 process.on('uncaughtException', error => {
-  errorLogger.error('UnhandleException Detected',error, error);
+  errorLogger.error('UnhandledException Detected',error, error);
   process.exit(1);
 });
 

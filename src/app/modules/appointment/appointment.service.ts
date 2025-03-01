@@ -1,10 +1,12 @@
 import { StatusCodes } from 'http-status-codes';
-import { get, Types } from 'mongoose';
+import { Types } from 'mongoose';
 import { Appointment } from './appointment.model';
 import { DoctorSchedule } from '../doctorSchedule/doctorSchedule.model';
 import AppError from '../../errors/AppError';
 import { User } from '../user/user.model';
 import { Doctor } from '../doctor/doctor.model';
+// import { OrderService } from '../order/order.service';
+// import { OrderModel } from '../order/order.model';
 
 const bookAppointment = async (req: any) => {
   const appointmentData = JSON.parse(req.body.data); // Parse JSON data from form-data
@@ -21,7 +23,10 @@ const bookAppointment = async (req: any) => {
   } = appointmentData;
 
   const user = await User.findById(userId).lean().exec();
-
+   const isDoctorScheduled = await DoctorSchedule.findOne({doctor:doctorId,_id:schedule._id});
+   if(!isDoctorScheduled){
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Doctor not scheduled');
+   }
   if (!user) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'User not found');
   }
@@ -59,6 +64,15 @@ const bookAppointment = async (req: any) => {
     }
   }
 
+
+  // const order= OrderModel.findById(appointmentData.orderId);
+  // if(!order){
+  //   throw new AppError(StatusCodes.BAD_REQUEST, 'Order not found');
+  // }
+   
+ 
+
+
   const appointment = await Appointment.create({
     doctor: doctorId,
     user: userId,
@@ -69,6 +83,13 @@ const bookAppointment = async (req: any) => {
     attachmentPdf: attachmentPdfs,
     status: 'Upcoming',
   });
+     
+  // await OrderService.updateOrder(appointmentData.orderId,{appointmentId:appointment
+  // ._id});
+
+ 
+
+
 
   return appointment;
 };
@@ -402,6 +423,24 @@ const doctorAppointments = async (doctorId: string, status: string) => {
   return appointments;
 };
 
+const doctorAppointmentCounts = async (doctorId: string) => {
+  const upcoming = await Appointment.countDocuments({
+    doctor: doctorId,
+    status: 'Upcoming',
+  });
+  const completed = await Appointment.countDocuments({
+    doctor: doctorId,
+    status: 'Completed',
+  });
+  const cancelled = await Appointment.countDocuments({
+    doctor: doctorId,
+    status: 'Cancelled',
+  });
+
+  return { upcoming, completed, cancelled ,total:upcoming+completed+cancelled};
+}
+
+
 export const AppointmentServices = {
   bookAppointment,
   getUserAppointments,
@@ -413,4 +452,5 @@ export const AppointmentServices = {
   addPrescriptionToAppointment,
   appointmentStatusUpdate,
   doctorAppointments,
+  doctorAppointmentCounts,
 };

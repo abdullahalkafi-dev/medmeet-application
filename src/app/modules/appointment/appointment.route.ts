@@ -27,10 +27,13 @@ router.get(
   auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   AppointmentControllers.getAllUserPrescriptions
 );
-
+router.get(
+  '/doctor/count/:doctorId',
+  auth(USER_ROLES.DOCTOR, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  AppointmentControllers.doctorAppointmentCounts
+);
 router.get(
   '/doctor/:doctorId',
-  
   auth(USER_ROLES.DOCTOR, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   AppointmentControllers.doctorAppointments
 );
@@ -88,10 +91,14 @@ router.post(
 );
 router.post(
   '/status/:id',
-  auth(USER_ROLES.DOCTOR, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN,USER_ROLES.USER),
+  auth(
+    USER_ROLES.DOCTOR,
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.USER
+  ),
   validateRequest(AppointmentValidation.appointmentStatusUpdateValidation),
   AppointmentControllers.appointmentStatusUpdate
 );
- 
 
 export const AppointmentRouter = router;

@@ -15,7 +15,7 @@ import cron from 'node-cron';
 
 import { User } from './app/modules/user/user.model';
 import { logger } from './shared/logger';
-import { SubscriptationController } from './app/modules/subs/subs.controller';
+
 import AppError from './app/errors/AppError';
 
 const app = express();
@@ -25,7 +25,7 @@ app.use(Morgan.successHandler);
 app.use(Morgan.errorHandler);
 
 //body parser
-// app.use(cors());
+
 app.use(
   cors({
     origin: '*',

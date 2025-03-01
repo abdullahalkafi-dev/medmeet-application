@@ -163,35 +163,72 @@ const getSingleDoctor = async (id: string) => {
     })
     .select('review')
     .lean();
-  const TotalPatientsCount = new Set(
-    appointments.map((review: any) => review.user._id)
-  ).size || 0;
+  const TotalPatientsCount =
+    new Set(appointments.map((review: any) => review.user._id)).size || 0;
 
   const withReviewsAppointment = appointments.filter(
     (appointment: any) => appointment.review
   );
 
+  const reviews = withReviewsAppointment.map((review: any) => ({
+    rating: review?.review?.rating,
+    review: review?.review?.review,
+    createdAt: review?.review?.createdAt,
+    _id: review._id,
+    name: review.user.name,
+    country: review.user.country,
+    image: review.user.image,
+  }));
+
+  function getRatingPercentages(reviews: any) {
+    const ratingCounts: { [key: number]: number } = {};
+    reviews.forEach((review: any) => {
+      if (ratingCounts[review.rating]) {
+        ratingCounts[review.rating] += 1;
+      } else {
+        ratingCounts[review.rating] = 1;
+      }
+    });
+
+    // Step 2: Include all ratings from 1 to 5, ensuring missing ones are set to 0
+    const totalReviews = reviews.length;
+    const ratingPercentages = [];
+
+    // Loop through ratings 1 to 5 and calculate the percentage
+    for (let i = 1; i <= 5; i++) {
+      const count = ratingCounts[i] || 0; // Default to 0 if not found
+      const percentage = totalReviews ? (count / totalReviews) * 100 : 0;
+      ratingPercentages.push({
+        rating: i,
+        percentage: parseFloat(percentage.toFixed(2)),
+      });
+    }
+
+    return ratingPercentages;
+  }
+
+  // Generate the rating percentages
+  const ratingPercentage = getRatingPercentages(reviews);
+
   const result = {
     ...doctor,
     TotalPatientsCount,
-
-    reviews: withReviewsAppointment.map((review: any) => ({
-      rating: review?.review?.rating,
-      review: review?.review?.review,
-      createdAt: review?.review?.createdAt,
-      _id: review._id,
-      name: review.user.name,
-      country: review.user.country,
-      image: review.user.image,
-    })),
+    reviews,
+    ratingPercentage,
   };
-
   return result;
 };
 //get all doctors
-const getAllDoctors = async (query: any) => {
+const getAllDoctors = async (query: any, req: any) => {
+  const user = req.user;
+
+  let dirQuery = {};
+  if (user.role === 'DOCTOR') {
+    dirQuery = { _id: { $ne: req.user.id } };
+  }
+
   const doctorQuery = new QueryBuilder(
-    Doctor.find().populate('specialist'),
+    Doctor.find(dirQuery).populate('specialist'),
     query
   )
     .search(['name', 'country', 'clinic'])
@@ -199,8 +236,10 @@ const getAllDoctors = async (query: any) => {
     .sort()
     .paginate()
     .fields();
-  const result = await doctorQuery.modelQuery;
+
+  let result = await doctorQuery.modelQuery;
   const meta = await doctorQuery.countTotal();
+
   return { result, meta };
 };
 const updateDoctorApprovedStatus = async (

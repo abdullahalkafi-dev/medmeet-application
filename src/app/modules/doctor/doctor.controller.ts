@@ -102,7 +102,7 @@ const getAllDoctors = catchAsync(async (req: Request, res: Response) => {
     req.query.approvedStatus = 'approved' as any;
   }
 
-  const result = await DoctorService.getAllDoctors(req.query);
+  const result = await DoctorService.getAllDoctors(req.query,req);
 
   sendResponse(res, {
     success: true,

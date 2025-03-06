@@ -100,6 +100,7 @@ const updateDoctorProfileToDB = async (
   if (!isExistDoctor) {
     throw new AppError(StatusCodes.BAD_REQUEST, "Doctor doesn't exist!");
   }
+
   if (
     payload.image &&
     isExistDoctor.image &&
@@ -108,15 +109,12 @@ const updateDoctorProfileToDB = async (
   ) {
     unlinkFile(isExistDoctor.image);
   }
-
   if (payload.professionalIdFront && isExistDoctor.professionalIdFront) {
     unlinkFile(isExistDoctor.professionalIdFront);
   }
-
   if (payload.professionalIdBack && isExistDoctor.professionalIdBack) {
     unlinkFile(isExistDoctor.professionalIdBack);
   }
-
   if (payload.medicalLicense && isExistDoctor.medicalLicense) {
     unlinkFile(isExistDoctor.medicalLicense);
   }

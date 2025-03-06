@@ -3,6 +3,7 @@ import AppError from '../../errors/AppError';
 import { Category } from './category.model';
 import { TCategory } from './category.interface';
 import { QueryBuilder } from '../../builder/QueryBuilder';
+import { Doctor } from '../doctor/doctor.model';
 
 const createCategoryToDB = async (payload: Partial<TCategory>) => {
   const isExistCategory = await Category.findOne({
@@ -57,19 +58,28 @@ const updateCategory = async (id: string, payload: Partial<TCategory>) => {
   return updatedCategory;
 };
 
-// need-work
-// const deleteCategory = async (id: string) => {
-//     const category = await Category.findByIdAndDelete(id);
-//     if (!category) {
-//         throw new AppError(StatusCodes.NOT_FOUND, "Category not found!");
-//     }
-//     return category;
-// };
+const deleteCategory = async (id: string) => {
+  const isAnyDoctorHasThisCategory = await Doctor.findOne({
+    specialist: id,
+  });
+  if (isAnyDoctorHasThisCategory) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Category is associated with doctor!'
+    );
+  }
+
+  const category = await Category.findByIdAndDelete(id);
+  if (!category) {
+    throw new AppError(StatusCodes.NOT_FOUND, 'Category not found!');
+  }
+  return category;
+};
 
 export const CategoryService = {
   createCategoryToDB,
   getSingleCategory,
   updateCategory,
   getAllCategories,
-  // deleteCategory
+  deleteCategory
 };

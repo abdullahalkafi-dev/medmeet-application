@@ -100,5 +100,6 @@ router.post(
   validateRequest(AppointmentValidation.appointmentStatusUpdateValidation),
   AppointmentControllers.appointmentStatusUpdate
 );
+router.get('/', auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), AppointmentControllers.getAllAppointments);
 
 export const AppointmentRouter = router;

@@ -5,8 +5,7 @@ import { DoctorSchedule } from '../doctorSchedule/doctorSchedule.model';
 import AppError from '../../errors/AppError';
 import { User } from '../user/user.model';
 import { Doctor } from '../doctor/doctor.model';
-// import { OrderService } from '../order/order.service';
-// import { OrderModel } from '../order/order.model';
+
 
 const bookAppointment = async (req: any) => {
   const appointmentData = JSON.parse(req.body.data); // Parse JSON data from form-data
@@ -21,12 +20,14 @@ const bookAppointment = async (req: any) => {
     slot: { startTime, endTime },
     patientDetails: { fullName, gender, age, problemDescription },
   } = appointmentData;
-
   const user = await User.findById(userId).lean().exec();
-   const isDoctorScheduled = await DoctorSchedule.findOne({doctor:doctorId,_id:schedule._id});
-   if(!isDoctorScheduled){
+  const isDoctorScheduled = await DoctorSchedule.findOne({
+    doctor: doctorId,
+    _id: schedule._id,
+  });
+  if (!isDoctorScheduled) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Doctor not scheduled');
-   }
+  }
   if (!user) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'User not found');
   }
@@ -64,14 +65,10 @@ const bookAppointment = async (req: any) => {
     }
   }
 
-
   // const order= OrderModel.findById(appointmentData.orderId);
   // if(!order){
   //   throw new AppError(StatusCodes.BAD_REQUEST, 'Order not found');
   // }
-   
- 
-
 
   const appointment = await Appointment.create({
     doctor: doctorId,
@@ -83,13 +80,9 @@ const bookAppointment = async (req: any) => {
     attachmentPdf: attachmentPdfs,
     status: 'Upcoming',
   });
-     
+
   // await OrderService.updateOrder(appointmentData.orderId,{appointmentId:appointment
   // ._id});
-
- 
-
-
 
   return appointment;
 };
@@ -128,20 +121,17 @@ const getUserAppointments = async (userId: string) => {
     {
       $project: {
         _id: 1,
-
         name: '$doctorDetails.name',
         image: '$doctorDetails.image',
         specialist: '$specialistDetails.name',
-
         date: '$scheduleDetails.date',
-
         startTime: '$slot.startTime',
         endTime: '$slot.endTime',
+        accountID:"$doctorDetails._id",
         status: 1,
       },
     },
   ]);
-
   return appointments;
 };
 const getAppointmentDetails = async (id: string) => {
@@ -197,9 +187,7 @@ const getAppointmentDetails = async (id: string) => {
           specialist: '$specialistDetails.name',
           consultationFee: '$doctorDetails.consultationFee',
         },
-
         date: '$scheduleDetails.date',
-
         startTime: '$slot.startTime',
         endTime: '$slot.endTime',
         user: {
@@ -215,6 +203,7 @@ const getAppointmentDetails = async (id: string) => {
         attachmentPdf: 1,
         review: 1,
         status: 1,
+        isNoteHidden: 1,
       },
     },
   ]);
@@ -222,7 +211,6 @@ const getAppointmentDetails = async (id: string) => {
   if (!appointment.review) {
     appointment.review = null;
   }
-
   return appointment;
 };
 
@@ -271,7 +259,12 @@ const reviewAppointment = async (id: string, userId: string, payload: any) => {
 
 const getAllUserPrescriptions = async (userId: string) => {
   const appointments = await Appointment.aggregate([
-    { $match: { user: new Types.ObjectId(userId) } },
+    {
+      $match: {
+        user: new Types.ObjectId(userId),
+        prescription: { $exists: true, $ne: null },
+      },
+    },
     {
       $lookup: {
         from: 'doctors',
@@ -293,7 +286,6 @@ const getAllUserPrescriptions = async (userId: string) => {
     {
       $project: {
         _id: 1,
-
         name: '$doctorDetails.name',
         image: '$doctorDetails.image',
         specialist: '$specialistDetails.name',
@@ -302,23 +294,26 @@ const getAllUserPrescriptions = async (userId: string) => {
         date: 1,
         startTime: '$slot.startTime',
         endTime: '$slot.endTime',
-
         status: 1,
         prescription: 1,
-        notes: 1,
+        doctorNote: 1,
       },
     },
   ]);
-
+  console.log(appointments);
   return appointments;
 };
-const addNoteToAppointment = async (
-  appointmentId: string,
-  note: { note: string }
-) => {
+const addNoteToAppointment = async (appointmentId: string, payload: any) => {
+  const validFields = ['note', 'isNoteHidden'];
+  const isValidField = Object.keys(payload).every(field =>
+    validFields.includes(field)
+  );
+  if (!isValidField) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid field');
+  }
   const appointment = await Appointment.findByIdAndUpdate(
     appointmentId,
-    { doctorNote: note.note },
+    { doctorNote: payload.note, ...payload },
     { new: true, upsert: true }
   );
 
@@ -387,6 +382,15 @@ const doctorAppointments = async (doctorId: string, status: string) => {
     { $unwind: '$doctorDetails' },
     {
       $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'userDetails',
+      },
+    },
+    { $unwind: '$userDetails' },
+    {
+      $lookup: {
         from: 'doctorschedules',
         localField: 'schedule',
         foreignField: '_id',
@@ -406,13 +410,11 @@ const doctorAppointments = async (doctorId: string, status: string) => {
     {
       $project: {
         _id: 1,
-
-        name: '$doctorDetails.name',
-        image: '$doctorDetails.image',
+        name: '$userDetails.name',
+        image: '$userDetails.image',
         specialist: '$specialistDetails.name',
-
+        accountID: '$userDetails._id',
         date: '$scheduleDetails.date',
-
         startTime: '$slot.startTime',
         endTime: '$slot.endTime',
         status: 1,
@@ -437,9 +439,114 @@ const doctorAppointmentCounts = async (doctorId: string) => {
     status: 'Cancelled',
   });
 
-  return { upcoming, completed, cancelled ,total:upcoming+completed+cancelled};
-}
+  return {
+    upcoming,
+    completed,
+    cancelled,
+    total: upcoming + completed + cancelled,
+  };
+};
 
+const getAllAppointments = async (
+  searchParams: {
+    date?: string;
+    name?: string;
+  },
+  page: number = 1,
+  limit: number = 9999999999999
+) => {
+  const { date, name } = searchParams;
+  const matchConditions: any = {};
+  if (date) {
+    const [day, month, year] = date.split('-');
+    const formattedDate = new Date(`${year}-${month}-${day}`);
+    matchConditions['scheduleDetails.date'] = formattedDate;
+  }
+
+  if (name) {
+    matchConditions['$or'] = [
+      { 'userDetails.name': { $regex: name, $options: 'i' } },
+      { 'doctorDetails.name': { $regex: name, $options: 'i' } },
+    ];
+  }
+
+  const appointments = await Appointment.aggregate([
+    {
+      $lookup: {
+        from: 'doctors',
+        localField: 'doctor',
+        foreignField: '_id',
+        as: 'doctorDetails',
+      },
+    },
+    { $unwind: '$doctorDetails' },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'userDetails',
+      },
+    },
+    { $unwind: '$userDetails' },
+    {
+      $lookup: {
+        from: 'doctorschedules',
+        localField: 'schedule',
+        foreignField: '_id',
+        as: 'scheduleDetails',
+      },
+    },
+    { $unwind: '$scheduleDetails' },
+    {
+      $lookup: {
+        from: 'categories',
+        localField: 'doctorDetails.specialist',
+        foreignField: '_id',
+        as: 'specialistDetails',
+      },
+    },
+    { $unwind: '$specialistDetails' },
+    { $match: matchConditions },
+    {
+      $project: {
+        _id: 1,
+        doctor: {
+          name: '$doctorDetails.name',
+          image: '$doctorDetails.image',
+          country: '$doctorDetails.country',
+          aboutDoctor: '$doctorDetails.aboutDoctor',
+          clinic: '$doctorDetails.clinic',
+          clinicAddress: '$doctorDetails.clinicAddress',
+          experience: '$doctorDetails.experience',
+          specialist: '$specialistDetails.name',
+          consultationFee: '$doctorDetails.consultationFee',
+        },
+        date: '$scheduleDetails.date',
+        startTime: '$slot.startTime',
+        endTime: '$slot.endTime',
+        user: {
+          name: '$userDetails.name',
+          country: '$userDetails.country',
+          phoneNumber: '$userDetails.phoneNumber',
+          image: '$userDetails.image',
+        },
+        prescription: 1,
+        doctorNote: 1,
+        patientDetails: 1,
+        attachmentImage: 1,
+        attachmentPdf: 1,
+        review: 1,
+        status: 1,
+        isNoteHidden: 1,
+      },
+    },
+    { $skip: (page - 1) * limit },
+    { $limit: limit },
+  ]);
+
+  return appointments;
+};
 
 export const AppointmentServices = {
   bookAppointment,
@@ -453,4 +560,5 @@ export const AppointmentServices = {
   appointmentStatusUpdate,
   doctorAppointments,
   doctorAppointmentCounts,
+  getAllAppointments,
 };

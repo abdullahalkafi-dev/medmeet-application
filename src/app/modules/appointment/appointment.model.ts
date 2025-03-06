@@ -1,6 +1,5 @@
 import { model, Schema } from 'mongoose';
 import { TAppointment } from './appointment.interface';
-
 const appointmentSchema = new Schema<TAppointment>(
   {
     doctor: { type: Schema.Types.ObjectId, ref: 'Doctor', required: true },
@@ -25,7 +24,7 @@ const appointmentSchema = new Schema<TAppointment>(
       problemDescription: { type: String, required: true },
     },
     prescription: { type: String },
-    doctorNote: { type: String , default: ''},
+    doctorNote: { type: String, default: '' },
     attachmentImage: { type: [String], default: [] }, // Store multiple image URLs
     attachmentPdf: { type: [String], default: [] }, // Store multiple PDF URLs
     isNoteHidden: { type: Boolean, default: true },

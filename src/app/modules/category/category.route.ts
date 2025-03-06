@@ -31,5 +31,5 @@ router.get(
 );
 
 router.get('/:id', CategoryController.getSingleCategory);
-
+router.delete('/:id', auth(USER_ROLES.SUPER_ADMIN, USER_ROLES.ADMIN), CategoryController.deleteCategory);
 export const CategoryRoutes = router;

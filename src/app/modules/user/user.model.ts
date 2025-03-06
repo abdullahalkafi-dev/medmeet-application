@@ -19,7 +19,6 @@ const userSchema = new Schema<TUser, UserModal>(
     email: {
       type: String,
       required: true,
-      unique: true,
     },
     phoneNumber: {
       type: String,
@@ -61,10 +60,12 @@ const userSchema = new Schema<TUser, UserModal>(
       default: false,
     },
 
-    isAllFieldsFilled: {
-      type: Boolean,
-      default: false,
-    },
+    isAllFieldsFilled:
+      {
+        type: Boolean,
+        default: false,
+      }
+    ,
     authentication: {
       type: {
         isResetPassword: {
@@ -92,6 +93,7 @@ userSchema.statics.isExistUserById = async (id: string) => {
   const isExist = await User.findById(id);
   return isExist;
 };
+
 
 userSchema.statics.isExistUserByEmail = async (email: string) => {
   const isExist = await User.findOne({ email });

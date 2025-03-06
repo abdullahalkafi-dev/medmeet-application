@@ -18,7 +18,7 @@ const doctorSchema = new Schema<TDoctor, DoctorModal>(
     email: {
       type: String,
       required: true,
-      unique: true,
+   
     },
     phoneNumber: {
       type: String,

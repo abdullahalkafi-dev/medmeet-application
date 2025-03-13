@@ -20,9 +20,8 @@ const createUserToDB = catchAsync(
 );
 
 const loginUser = catchAsync(async (req: Request, res: Response) => {
-  const { uniqueId, password } = req.body;
-  const user = await UserService.loginUser({ uniqueId, password });
-
+  const { uniqueId, password ,fcmToken} = req.body;
+  const user = await UserService.loginUser({ uniqueId, password ,fcmToken});
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,

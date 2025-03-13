@@ -33,6 +33,9 @@ const config_1 = __importDefault(require("../../../config"));
 const QueryBuilder_1 = require("../../builder/QueryBuilder");
 const appointment_model_1 = require("../appointment/appointment.model");
 const createDoctorToDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!payload.fcmToken) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Please provide fcm token');
+    }
     // Validate required fields
     const isExist = yield doctor_model_1.Doctor.findOne({
         $or: [{ email: payload.email }, { doctorId: payload.doctorId }],
@@ -46,7 +49,11 @@ const createDoctorToDB = (payload) => __awaiter(void 0, void 0, void 0, function
 });
 const loginDoctor = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const { uniqueId, password } = payload;
-    const doctor = yield doctor_model_1.Doctor.findOne({
+    console.log(payload);
+    if (!payload.fcmToken) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Please provide fcm token');
+    }
+    let doctor = yield doctor_model_1.Doctor.findOne({
         $or: [{ email: uniqueId }, { doctorId: uniqueId }],
     }).select('+password');
     if (!doctor) {
@@ -61,9 +68,15 @@ const loginDoctor = (payload) => __awaiter(void 0, void 0, void 0, function* () 
         role: doctor.role,
         email: doctor.email,
         approvedStatus: doctor.approvedStatus,
-    }, config_1.default.jwt.jwt_secret, '90d');
+    }, config_1.default.jwt.jwt_secret, '10000d');
     //create token
-    const refreshToken = jwtHelper_1.jwtHelper.createToken({ id: doctor._id, role: doctor.role, email: doctor.email }, config_1.default.jwt.jwt_refresh_secret, '150d');
+    const refreshToken = jwtHelper_1.jwtHelper.createToken({ id: doctor._id, role: doctor.role, email: doctor.email }, config_1.default.jwt.jwt_refresh_secret, '150000d');
+    if (payload.fcmToken) {
+        doctor = yield doctor_model_1.Doctor.findOneAndUpdate({ email: uniqueId }, { fcmToken: payload.fcmToken });
+    }
+    if (!doctor) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Doctor not found');
+    }
     const _a = doctor.toObject(), { password: _ } = _a, userWithoutPassword = __rest(_a, ["password"]);
     return { accessToken, refreshToken, user: userWithoutPassword };
 });
@@ -73,14 +86,16 @@ const getDoctorProfileFromDB = (doctor) => __awaiter(void 0, void 0, void 0, fun
     if (!isExistDoctor) {
         throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, "Doctor doesn't exist!");
     }
-    const reviews = yield appointment_model_1.Appointment.find({ doctor: id })
+    const appointments = yield appointment_model_1.Appointment.find({ doctor: id })
         .populate({
         path: 'user',
         select: 'name country image',
     })
         .select('review')
         .lean();
-    const result = Object.assign(Object.assign({}, isExistDoctor), { reviews: reviews.map((review) => ({
+    console.log(appointments);
+    const appointmentWithReviews = appointments.filter((review) => review.review);
+    const result = Object.assign(Object.assign({}, isExistDoctor), { reviews: appointmentWithReviews === null || appointmentWithReviews === void 0 ? void 0 : appointmentWithReviews.map((review) => ({
             rating: review.review.rating,
             review: review.review.review,
             createdAt: review.review.createdAt,
@@ -147,18 +162,47 @@ const getSingleDoctor = (id) => __awaiter(void 0, void 0, void 0, function* () {
         .lean();
     const TotalPatientsCount = new Set(appointments.map((review) => review.user._id)).size || 0;
     const withReviewsAppointment = appointments.filter((appointment) => appointment.review);
-    const result = Object.assign(Object.assign({}, doctor), { TotalPatientsCount, reviews: withReviewsAppointment.map((review) => {
-            var _a, _b, _c;
-            return ({
-                rating: (_a = review === null || review === void 0 ? void 0 : review.review) === null || _a === void 0 ? void 0 : _a.rating,
-                review: (_b = review === null || review === void 0 ? void 0 : review.review) === null || _b === void 0 ? void 0 : _b.review,
-                createdAt: (_c = review === null || review === void 0 ? void 0 : review.review) === null || _c === void 0 ? void 0 : _c.createdAt,
-                _id: review._id,
-                name: review.user.name,
-                country: review.user.country,
-                image: review.user.image,
+    const reviews = withReviewsAppointment.map((review) => {
+        var _a, _b, _c;
+        return ({
+            rating: (_a = review === null || review === void 0 ? void 0 : review.review) === null || _a === void 0 ? void 0 : _a.rating,
+            review: (_b = review === null || review === void 0 ? void 0 : review.review) === null || _b === void 0 ? void 0 : _b.review,
+            createdAt: (_c = review === null || review === void 0 ? void 0 : review.review) === null || _c === void 0 ? void 0 : _c.createdAt,
+            _id: review._id,
+            name: review.user.name,
+            country: review.user.country,
+            image: review.user.image,
+        });
+    });
+    function getRatingPercentages(reviews) {
+        const ratingCounts = {};
+        reviews.forEach((review) => {
+            if (ratingCounts[review.rating]) {
+                ratingCounts[review.rating] += 1;
+            }
+            else {
+                ratingCounts[review.rating] = 1;
+            }
+        });
+        // Step 2: Include all ratings from 1 to 5, ensuring missing ones are set to 0
+        const totalReviews = reviews.length;
+        const ratingPercentages = [];
+        // Loop through ratings 1 to 5 and calculate the percentage
+        for (let i = 1; i <= 5; i++) {
+            const count = ratingCounts[i] || 0; // Default to 0 if not found
+            const percentage = totalReviews ? (count / totalReviews) * 100 : 0;
+            ratingPercentages.push({
+                rating: i,
+                percentage: parseFloat(percentage.toFixed(2)),
             });
-        }) });
+        }
+        return ratingPercentages;
+    }
+    // Generate the rating percentages
+    const ratingPercentage = getRatingPercentages(reviews);
+    const result = Object.assign(Object.assign({}, doctor), { TotalPatientsCount,
+        reviews,
+        ratingPercentage });
     return result;
 });
 //get all doctors

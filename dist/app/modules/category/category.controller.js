@@ -68,9 +68,20 @@ const updateCategory = (0, catchAsync_1.default)((req, res, next) => __awaiter(v
         data: result,
     });
 }));
+const deleteCategory = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const category = yield category_service_1.CategoryService.deleteCategory(id);
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        message: 'Category deleted successfully',
+        data: category,
+    });
+}));
 exports.CategoryController = {
     createCategoryToDB,
     getSingleCategory,
     getAllCategories,
     updateCategory,
+    deleteCategory,
 };

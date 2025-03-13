@@ -27,8 +27,8 @@ const createUserToDB = (0, catchAsync_1.default)((req, res, next) => __awaiter(v
     });
 }));
 const loginUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { uniqueId, password } = req.body;
-    const user = yield user_service_1.UserService.loginUser({ uniqueId, password });
+    const { uniqueId, password, fcmToken } = req.body;
+    const user = yield user_service_1.UserService.loginUser({ uniqueId, password, fcmToken });
     (0, sendResponse_1.default)(res, {
         success: true,
         statusCode: http_status_codes_1.StatusCodes.OK,

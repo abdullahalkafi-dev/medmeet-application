@@ -31,7 +31,6 @@ const doctorSchema = new mongoose_1.Schema({
     email: {
         type: String,
         required: true,
-        unique: true,
     },
     phoneNumber: {
         type: String,
@@ -39,6 +38,9 @@ const doctorSchema = new mongoose_1.Schema({
     gender: {
         type: String,
         enum: ['Male', 'Female'],
+    },
+    fcmToken: {
+        type: String,
     },
     dob: {
         type: Date,

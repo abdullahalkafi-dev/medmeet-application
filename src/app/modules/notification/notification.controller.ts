@@ -1,62 +1,32 @@
-import { StatusCodes } from 'http-status-codes';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/sendResponse';
 import { NotificationService } from './notification.service';
-import { Request, Response } from 'express';
 
-const getNotificationToDb = catchAsync(async (req: Request, res: Response) => {
-  const user = req.user;
-  const result = await NotificationService.getNotificationToDb(user);
+const createNotification = catchAsync(async (req, res) => {
+  const result = await NotificationService.createNotification(req.body);
 
   sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'Notification retrived successfully',
     data: result,
+    message: 'Notification created successfully',
+    statusCode: 200,
+    success: true,
   });
 });
 
-const adminNotificationFromDB = catchAsync(
-  async (req: Request, res: Response) => {
-    const result = await NotificationService.adminNotification(req.query);
-
-    sendResponse(res, {
-      statusCode: StatusCodes.OK,
-      success: true,
-      message: 'Notifications Retrieved Successfully',
-      data: result,
-    });
-  }
-);
-
-const readNotification = catchAsync(async (req: Request, res: Response) => {
-  const user = req.user;
-  const result = await NotificationService.readNotification(user);
+const getUserNotification = catchAsync(async (req, res) => {
+  const result = await NotificationService.getUserNotification(
+    req.params.userId
+  );
 
   sendResponse(res, {
-    statusCode: StatusCodes.OK,
-    success: true,
-    message: 'Notification Read Successfully',
     data: result,
+    message: 'Notification retrieved successfully',
+    statusCode: 200,
+    success: true,
   });
 });
-
-const adminReadNotification = catchAsync(
-  async (req: Request, res: Response) => {
-    const result = await NotificationService.adminReadNotification();
-
-    sendResponse(res, {
-      statusCode: StatusCodes.OK,
-      success: true,
-      message: 'Notification Read Successfully',
-      data: result,
-    });
-  }
-);
 
 export const NotificationController = {
-  getNotificationToDb,
-  adminNotificationFromDB,
-  readNotification,
-  adminReadNotification,
+  createNotification,
+  getUserNotification,
 };

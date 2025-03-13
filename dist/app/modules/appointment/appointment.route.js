@@ -24,4 +24,5 @@ router.post('/note/:id', (0, auth_1.default)(user_1.USER_ROLES.USER, user_1.USER
 router.post('/note/toggle/:id', (0, auth_1.default)(user_1.USER_ROLES.USER, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.DOCTOR), appointment_controller_1.AppointmentControllers.toggleIsNoteHidden);
 router.post('/prescription/:id', (0, auth_1.default)(user_1.USER_ROLES.USER, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.DOCTOR), fileUploadHandler_1.default, appointment_controller_1.AppointmentControllers.addPrescriptionToAppointment);
 router.post('/status/:id', (0, auth_1.default)(user_1.USER_ROLES.DOCTOR, user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.USER), (0, validateRequest_1.default)(appointment_validation_1.AppointmentValidation.appointmentStatusUpdateValidation), appointment_controller_1.AppointmentControllers.appointmentStatusUpdate);
+router.get('/', (0, auth_1.default)(user_1.USER_ROLES.ADMIN, user_1.USER_ROLES.SUPER_ADMIN), appointment_controller_1.AppointmentControllers.getAllAppointments);
 exports.AppointmentRouter = router;

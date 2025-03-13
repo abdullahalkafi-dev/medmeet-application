@@ -66,6 +66,9 @@ const userSchema = new Schema<TUser, UserModal>(
         default: false,
       }
     ,
+    fcmToken: {
+      type: String,
+    },
     authentication: {
       type: {
         isResetPassword: {

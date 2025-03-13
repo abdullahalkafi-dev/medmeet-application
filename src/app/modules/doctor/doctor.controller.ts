@@ -21,8 +21,8 @@ const createDoctorToDB = catchAsync(
 );
 
 const loginDoctor = catchAsync(async (req: Request, res: Response) => {
-  const { uniqueId, password } = req.body;
-  const doctor = await DoctorService.loginDoctor({ uniqueId, password });
+  const { uniqueId, password,fcmToken } = req.body;
+  const doctor = await DoctorService.loginDoctor({ uniqueId, password ,fcmToken});
 
   sendResponse(res, {
     success: true,

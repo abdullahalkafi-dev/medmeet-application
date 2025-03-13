@@ -14,9 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendEmail = sendEmail;
 const nodemailer_1 = __importDefault(require("nodemailer"));
-const AppError_1 = __importDefault(require("../errors/AppError"));
 const http_status_codes_1 = require("http-status-codes");
 const config_1 = __importDefault(require("../config"));
+const AppError_1 = __importDefault(require("../app/errors/AppError"));
 function sendEmail(email, subject, text) {
     return __awaiter(this, void 0, void 0, function* () {
         try {

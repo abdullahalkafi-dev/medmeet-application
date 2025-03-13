@@ -11,6 +11,10 @@ import { User } from './user.model';
 import { USER_ROLES } from '../../../enums/user';
 
 const createUserToDB = async (payload: Partial<TUser>) => {
+  if (!payload.fcmToken) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Please provide fcm token');
+  }
+
   // Validate required fields
   const isExist = await User.findOne({
     email: payload.email,
@@ -20,26 +24,27 @@ const createUserToDB = async (payload: Partial<TUser>) => {
   }
   // Create user first
   const user = await User.create(payload);
-
+  if (payload.fcmToken) {
+    await User.findByIdAndUpdate(user._id, { fcmToken: payload.fcmToken });
+  }
   return user;
 };
 
 const loginUser = async (payload: Partial<TUser> & { uniqueId: string }) => {
-  const { uniqueId, password } = payload;
+  const { uniqueId, password, fcmToken } = payload;
+  console.log(payload);
   if (!uniqueId || !password) {
     throw new AppError(
       StatusCodes.BAD_REQUEST,
       'Please provide email and password'
     );
   }
-  const user = await User.findOne({
+  let user = await User.findOne({
     email: uniqueId,
   }).select('+password');
-
   if (!user) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'User not found');
   }
-  console.log(password, user.password);
   const isMatch = await User.isMatchPassword(password!, user.password);
   if (!isMatch) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid credentials');
@@ -51,17 +56,24 @@ const loginUser = async (payload: Partial<TUser> & { uniqueId: string }) => {
       email: user.email,
     },
     config.jwt.jwt_secret as Secret,
-    '90d'
+    '10000d'
   );
   //create token
   const refreshToken = jwtHelper.createToken(
     { id: user._id, role: user.role, email: user.email },
     config.jwt.jwt_refresh_secret as Secret,
-    '150d'
+    '15000d'
   );
 
-  const { password: _, ...userWithoutPassword } = user.toObject();
+  if (fcmToken) {
+    user = await User.findByIdAndUpdate(user._id, { fcmToken });
+  }
 
+  if (!user) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'User not found');
+  }
+
+  const { password: _, ...userWithoutPassword } = user.toObject();
   return { accessToken, refreshToken, user: userWithoutPassword };
 };
 
@@ -111,7 +123,7 @@ const updateUserProfileToDB = async (
       updateDoc.phoneNumber &&
       updateDoc.gender &&
       updateDoc.dob &&
-      updateDoc.country 
+      updateDoc.country
     )
   ) {
     finalUserDocument = await User.findOneAndUpdate(

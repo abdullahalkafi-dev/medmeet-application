@@ -23,6 +23,7 @@ export type TDoctor = {
   image?: string;
   subscription: boolean;
   password: string;
+  fcmToken?: string;
   status: 'active' | 'delete';
   verified?: boolean;
   approvedStatus?: 'pending' | 'approved' | 'rejected';

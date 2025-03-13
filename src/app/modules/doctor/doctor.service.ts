@@ -10,6 +10,9 @@ import { QueryBuilder } from '../../builder/QueryBuilder';
 import { Appointment } from '../appointment/appointment.model';
 
 const createDoctorToDB = async (payload: Partial<TDoctor>) => {
+  if (!payload.fcmToken) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Please provide fcm token');
+  }
   // Validate required fields
   const isExist = await Doctor.findOne({
     $or: [{ email: payload.email }, { doctorId: payload.doctorId }],
@@ -27,7 +30,11 @@ const loginDoctor = async (
   payload: Partial<TDoctor> & { uniqueId: string }
 ) => {
   const { uniqueId, password } = payload;
-  const doctor = await Doctor.findOne({
+  console.log(payload);
+  if (!payload.fcmToken) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Please provide fcm token');
+  }
+  let doctor = await Doctor.findOne({
     $or: [{ email: uniqueId }, { doctorId: uniqueId }],
   }).select('+password');
   if (!doctor) {
@@ -46,17 +53,25 @@ const loginDoctor = async (
       approvedStatus: doctor.approvedStatus,
     },
     config.jwt.jwt_secret as Secret,
-    '90d'
+    '10000d'
   );
   //create token
   const refreshToken = jwtHelper.createToken(
     { id: doctor._id, role: doctor.role, email: doctor.email },
     config.jwt.jwt_refresh_secret as Secret,
-    '150d'
+    '150000d'
   );
 
+  if (payload.fcmToken) {
+    doctor = await Doctor.findOneAndUpdate(
+      { email: uniqueId },
+      { fcmToken: payload.fcmToken }
+    );
+  }
+  if (!doctor) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Doctor not found');
+  }
   const { password: _, ...userWithoutPassword } = doctor.toObject();
-
   return { accessToken, refreshToken, user: userWithoutPassword };
 };
 const getDoctorProfileFromDB = async (doctor: JwtPayload) => {
@@ -66,17 +81,23 @@ const getDoctorProfileFromDB = async (doctor: JwtPayload) => {
     throw new AppError(StatusCodes.BAD_REQUEST, "Doctor doesn't exist!");
   }
 
-  const reviews = await Appointment.find({ doctor: id })
+  const appointments = await Appointment.find({ doctor: id })
     .populate({
       path: 'user',
       select: 'name country image',
     })
     .select('review')
     .lean();
+  console.log(appointments);
+
+  const appointmentWithReviews = appointments.filter(
+    (review: any) => review.review
+  );
+
   const result = {
     ...isExistDoctor,
 
-    reviews: reviews.map((review: any) => ({
+    reviews: appointmentWithReviews?.map((review: any) => ({
       rating: review.review.rating,
       review: review.review.review,
       createdAt: review.review.createdAt,

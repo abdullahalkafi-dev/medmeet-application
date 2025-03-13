@@ -7,6 +7,9 @@ const medicineSchema = new mongoose_1.Schema({
         type: String,
         required: true,
         index: true,
+        trim: true,
     },
+}, {
+    timestamps: true,
 });
 exports.Medicine = (0, mongoose_1.model)('Medicine', medicineSchema);

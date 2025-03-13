@@ -16,4 +16,5 @@ router.post('/', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_
 router.post('/update-category/:id', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN), fileUploadHandler_1.default, (0, validateRequest_1.default)(category_validation_1.CategoryValidation.updateCategoryZodSchema), category_controller_1.CategoryController.updateCategory);
 router.get('/', category_controller_1.CategoryController.getAllCategories);
 router.get('/:id', category_controller_1.CategoryController.getSingleCategory);
+router.delete('/:id', (0, auth_1.default)(user_1.USER_ROLES.SUPER_ADMIN, user_1.USER_ROLES.ADMIN), category_controller_1.CategoryController.deleteCategory);
 exports.CategoryRoutes = router;

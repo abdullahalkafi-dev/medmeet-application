@@ -18,7 +18,6 @@ const doctorSchema = new Schema<TDoctor, DoctorModal>(
     email: {
       type: String,
       required: true,
-   
     },
     phoneNumber: {
       type: String,
@@ -26,6 +25,9 @@ const doctorSchema = new Schema<TDoctor, DoctorModal>(
     gender: {
       type: String,
       enum: ['Male', 'Female'],
+    },
+    fcmToken: {
+      type: String,
     },
     dob: {
       type: Date,

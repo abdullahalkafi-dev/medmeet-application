@@ -16,6 +16,7 @@ export type TUser = {
   status: 'active' | 'delete';
   verified?: boolean;
   isAllFieldsFilled?: boolean;
+  fcmToken?: string;
   authentication?: {
     isResetPassword: boolean;
     oneTimeCode: number;

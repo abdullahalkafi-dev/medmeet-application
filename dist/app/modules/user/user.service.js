@@ -33,6 +33,9 @@ const QueryBuilder_1 = require("../../builder/QueryBuilder");
 const user_model_1 = require("./user.model");
 const user_1 = require("../../../enums/user");
 const createUserToDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!payload.fcmToken) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Please provide fcm token');
+    }
     // Validate required fields
     const isExist = yield user_model_1.User.findOne({
         email: payload.email,
@@ -42,20 +45,23 @@ const createUserToDB = (payload) => __awaiter(void 0, void 0, void 0, function* 
     }
     // Create user first
     const user = yield user_model_1.User.create(payload);
+    if (payload.fcmToken) {
+        yield user_model_1.User.findByIdAndUpdate(user._id, { fcmToken: payload.fcmToken });
+    }
     return user;
 });
 const loginUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    const { uniqueId, password } = payload;
+    const { uniqueId, password, fcmToken } = payload;
+    console.log(payload);
     if (!uniqueId || !password) {
         throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Please provide email and password');
     }
-    const user = yield user_model_1.User.findOne({
+    let user = yield user_model_1.User.findOne({
         email: uniqueId,
     }).select('+password');
     if (!user) {
         throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'User not found');
     }
-    console.log(password, user.password);
     const isMatch = yield user_model_1.User.isMatchPassword(password, user.password);
     if (!isMatch) {
         throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Invalid credentials');
@@ -64,9 +70,15 @@ const loginUser = (payload) => __awaiter(void 0, void 0, void 0, function* () {
         id: user._id,
         role: user.role,
         email: user.email,
-    }, config_1.default.jwt.jwt_secret, '90d');
+    }, config_1.default.jwt.jwt_secret, '10000d');
     //create token
-    const refreshToken = jwtHelper_1.jwtHelper.createToken({ id: user._id, role: user.role, email: user.email }, config_1.default.jwt.jwt_refresh_secret, '150d');
+    const refreshToken = jwtHelper_1.jwtHelper.createToken({ id: user._id, role: user.role, email: user.email }, config_1.default.jwt.jwt_refresh_secret, '15000d');
+    if (fcmToken) {
+        user = yield user_model_1.User.findByIdAndUpdate(user._id, { fcmToken });
+    }
+    if (!user) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'User not found');
+    }
     const _a = user.toObject(), { password: _ } = _a, userWithoutPassword = __rest(_a, ["password"]);
     return { accessToken, refreshToken, user: userWithoutPassword };
 });

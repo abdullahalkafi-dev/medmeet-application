@@ -64,7 +64,7 @@ const fileUploadHandler = (req, res, next) => {
             const fileName = ((_a = req === null || req === void 0 ? void 0 : req.user) === null || _a === void 0 ? void 0 : _a.id) &&
                 req.url === '/update-profile' &&
                 file.fieldname == 'image'
-                ? req.user.id
+                ? (req.user.id + originalNameWithoutExt)
                 : originalNameWithoutExt.toLowerCase().split(' ').join('-') +
                     '-' +
                     formattedDate;

@@ -5,7 +5,8 @@ import { DoctorSchedule } from '../doctorSchedule/doctorSchedule.model';
 import AppError from '../../errors/AppError';
 import { User } from '../user/user.model';
 import { Doctor } from '../doctor/doctor.model';
-
+import admin from 'firebase-admin';
+import { NotificationService } from '../notification/notification.service';
 
 const bookAppointment = async (req: any) => {
   const appointmentData = JSON.parse(req.body.data); // Parse JSON data from form-data
@@ -21,6 +22,8 @@ const bookAppointment = async (req: any) => {
     patientDetails: { fullName, gender, age, problemDescription },
   } = appointmentData;
   const user = await User.findById(userId).lean().exec();
+  const doctor = await Doctor.findById(doctorId).lean().exec();
+  const fcmToken = doctor?.fcmToken;
   const isDoctorScheduled = await DoctorSchedule.findOne({
     doctor: doctorId,
     _id: schedule._id,
@@ -34,15 +37,12 @@ const bookAppointment = async (req: any) => {
   const slotIndex = schedule.slots.findIndex(
     slot => slot.startTime === startTime && slot.endTime === endTime
   );
-
   if (slotIndex === -1) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Slot not found');
   }
-
   if (schedule.slots[slotIndex].isBooked) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Slot already booked');
   }
-
   schedule.slots[slotIndex].isBooked = true;
   schedule.slots[slotIndex].bookedBy = new Types.ObjectId(userId);
   await schedule.save();
@@ -84,9 +84,25 @@ const bookAppointment = async (req: any) => {
   // await OrderService.updateOrder(appointmentData.orderId,{appointmentId:appointment
   // ._id});
 
+  if (appointment && fcmToken) {
+    const message = {
+      token: fcmToken, // Device FCM Token
+      notification: {
+        title: 'New Appointment', // Title of the notification
+        body: `You have an appointment with ${user.name} at ${startTime}`, // Message
+      },
+      data: {
+        extraData: `You have an appointment with ${user.name} at ${startTime}`,
+      },
+    };
+    await admin.messaging().send(message);
+    await NotificationService.createNotification({
+      body: `You have an appointment with ${user.name} at ${startTime}`,
+      user: doctorId,
+    });
+  }
   return appointment;
 };
-
 const getUserAppointments = async (userId: string) => {
   const appointments = await Appointment.aggregate([
     { $match: { user: new Types.ObjectId(userId) } },
@@ -119,6 +135,10 @@ const getUserAppointments = async (userId: string) => {
     },
     { $unwind: '$specialistDetails' },
     {
+      $sort: { 'scheduleDetails.date': -1 },
+    }
+    ,
+    {
       $project: {
         _id: 1,
         name: '$doctorDetails.name',
@@ -127,11 +147,12 @@ const getUserAppointments = async (userId: string) => {
         date: '$scheduleDetails.date',
         startTime: '$slot.startTime',
         endTime: '$slot.endTime',
-        accountID:"$doctorDetails._id",
+        accountID: '$doctorDetails._id',
         status: 1,
       },
     },
   ]);
+
   return appointments;
 };
 const getAppointmentDetails = async (id: string) => {
@@ -177,6 +198,7 @@ const getAppointmentDetails = async (id: string) => {
       $project: {
         _id: 1,
         doctor: {
+          _id: '$doctorDetails._id',
           name: '$doctorDetails.name',
           image: '$doctorDetails.image',
           country: '$doctorDetails.country',
@@ -191,6 +213,7 @@ const getAppointmentDetails = async (id: string) => {
         startTime: '$slot.startTime',
         endTime: '$slot.endTime',
         user: {
+          _id: '$userDetails._id',
           name: '$userDetails.name',
           country: '$userDetails.country',
           phoneNumber: '$userDetails.phoneNumber',
@@ -213,24 +236,27 @@ const getAppointmentDetails = async (id: string) => {
   }
   return appointment;
 };
-
 const reviewAppointment = async (id: string, userId: string, payload: any) => {
+  console.log(id, userId, payload);
   const isValidUserForReview = await Appointment.findOne({
     _id: id,
     user: userId,
   });
-
+  const userData = await User.findById(userId);
+  if (!userData) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'User not found');
+  }
   if (!isValidUserForReview) {
     throw new AppError(
       StatusCodes.BAD_REQUEST,
       'You are not allowed to review this appointment'
     );
   }
-  const appointment = await Appointment.findByIdAndUpdate(
+  const appointment = (await Appointment.findByIdAndUpdate(
     id,
     { review: { ...payload, createdAt: new Date() } },
     { new: true }
-  );
+  )) as any;
 
   if (!appointment) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Appointment not found');
@@ -251,12 +277,30 @@ const reviewAppointment = async (id: string, userId: string, payload: any) => {
     ? parseFloat(avgRating[0].avgRating.toFixed(1))
     : 0;
 
-  await Doctor.findByIdAndUpdate(appointment.doctor, {
-    avgRating: newAvgRating,
-  });
+  const doctor = await Doctor.findByIdAndUpdate(
+    appointment.doctor,
+    {
+      avgRating: newAvgRating,
+    },
+    { new: true }
+  );
+  console.log(appointment);
+  if (doctor && doctor.fcmToken) {
+    const message = {
+      token: doctor.fcmToken, // Device FCM Token
+      notification: {
+        title: 'New Review', // Title of the notification
+        body: `You got ${payload.rating} stars from ${userData.name}`, // Message
+      },
+      data: {
+        extraData: `You got ${payload.rating} stars from ${userData.name}`,
+      },
+    };
+    await admin.messaging().send(message);
+  }
+
   return appointment;
 };
-
 const getAllUserPrescriptions = async (userId: string) => {
   const appointments = await Appointment.aggregate([
     {
@@ -328,7 +372,6 @@ const toggleIsNoteHidden = async (appointmentId: string) => {
   await appointment.save();
   return appointment;
 };
-
 const addPrescriptionToAppointment = async (
   appointmentId: string,
   req: any
@@ -347,7 +390,6 @@ const addPrescriptionToAppointment = async (
   );
   return appointment;
 };
-
 const appointmentStatusUpdate = async (
   appointmentId: string,
   status: string
@@ -359,7 +401,6 @@ const appointmentStatusUpdate = async (
   );
   return appointment;
 };
-
 const doctorAppointments = async (doctorId: string, status: string) => {
   if (!doctorId) {
     throw new AppError(StatusCodes.BAD_REQUEST, 'Doctor Id is required');
@@ -424,7 +465,6 @@ const doctorAppointments = async (doctorId: string, status: string) => {
 
   return appointments;
 };
-
 const doctorAppointmentCounts = async (doctorId: string) => {
   const upcoming = await Appointment.countDocuments({
     doctor: doctorId,
@@ -446,7 +486,6 @@ const doctorAppointmentCounts = async (doctorId: string) => {
     total: upcoming + completed + cancelled,
   };
 };
-
 const getAllAppointments = async (
   searchParams: {
     date?: string;
@@ -547,7 +586,6 @@ const getAllAppointments = async (
 
   return appointments;
 };
-
 export const AppointmentServices = {
   bookAppointment,
   getUserAppointments,

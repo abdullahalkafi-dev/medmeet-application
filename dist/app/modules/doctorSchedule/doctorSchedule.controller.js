@@ -39,9 +39,7 @@ const getDoctorSchedules = (0, catchAsync_1.default)((req, res) => __awaiter(voi
 const getAvailableSlots = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { doctorId, date } = req.query;
     if (!doctorId || !date) {
-        return res
-            .status(http_status_codes_1.StatusCodes.BAD_REQUEST)
-            .json({ message: 'doctorId and date are required' });
+        throw new Error('Doctor ID and date are required');
     }
     const slots = yield doctorSchedule_service_1.DoctorScheduleService.getAvailableSlots(doctorId, date);
     (0, sendResponse_1.default)(res, {

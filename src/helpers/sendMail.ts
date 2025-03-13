@@ -1,7 +1,8 @@
 import nodemailer from 'nodemailer';
-import AppError from '../errors/AppError';
+
 import { StatusCodes } from 'http-status-codes';
 import config from '../config';
+import AppError from '../app/errors/AppError';
 
 export async function sendEmail(email: string, subject: string, text: string) {
   try {

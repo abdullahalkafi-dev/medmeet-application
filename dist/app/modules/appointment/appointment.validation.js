@@ -62,7 +62,7 @@ const reviewValidation = zod_1.z.object({
             .number({ required_error: 'Rating is required' })
             .min(1, 'Rating must be at least 1')
             .max(5, 'Rating must be at most 5'),
-        review: zod_1.z.string({ required_error: 'Review is required' }).min(6, {
+        review: zod_1.z.string({ required_error: 'Review is required' }).min(1, {
             message: 'Review must be at least 6 characters long',
         }),
     }),

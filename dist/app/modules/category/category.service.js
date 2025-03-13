@@ -17,6 +17,7 @@ const http_status_codes_1 = require("http-status-codes");
 const AppError_1 = __importDefault(require("../../errors/AppError"));
 const category_model_1 = require("./category.model");
 const QueryBuilder_1 = require("../../builder/QueryBuilder");
+const doctor_model_1 = require("../doctor/doctor.model");
 const createCategoryToDB = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     const isExistCategory = yield category_model_1.Category.findOne({
         name: payload.name,
@@ -62,18 +63,23 @@ const updateCategory = (id, payload) => __awaiter(void 0, void 0, void 0, functi
     });
     return updatedCategory;
 });
-// need-work
-// const deleteCategory = async (id: string) => {
-//     const category = await Category.findByIdAndDelete(id);
-//     if (!category) {
-//         throw new AppError(StatusCodes.NOT_FOUND, "Category not found!");
-//     }
-//     return category;
-// };
+const deleteCategory = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const isAnyDoctorHasThisCategory = yield doctor_model_1.Doctor.findOne({
+        specialist: id,
+    });
+    if (isAnyDoctorHasThisCategory) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Category is associated with doctor!');
+    }
+    const category = yield category_model_1.Category.findByIdAndDelete(id);
+    if (!category) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.NOT_FOUND, 'Category not found!');
+    }
+    return category;
+});
 exports.CategoryService = {
     createCategoryToDB,
     getSingleCategory,
     updateCategory,
     getAllCategories,
-    // deleteCategory
+    deleteCategory
 };

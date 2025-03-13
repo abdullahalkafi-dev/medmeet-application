@@ -18,13 +18,11 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
       fs.mkdirSync(dirPath);
     }
   };
-  
 
   // Create filename
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       let uploadDir;
-
 
       switch (file.fieldname) {
         case 'image':
@@ -72,7 +70,7 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
         req?.user?.id &&
         req.url === '/update-profile' &&
         file.fieldname == 'image'
-          ? req.user.id
+          ? (req.user.id + originalNameWithoutExt)
           : originalNameWithoutExt.toLowerCase().split(' ').join('-') +
             '-' +
             formattedDate;

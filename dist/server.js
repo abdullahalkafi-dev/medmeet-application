@@ -14,18 +14,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const colors_1 = __importDefault(require("colors"));
 const mongoose_1 = __importDefault(require("mongoose"));
-const socket_io_1 = require("socket.io");
-const app_1 = __importDefault(require("./app"));
+const app_1 = require("./app");
 const config_1 = __importDefault(require("./config"));
 const DB_1 = __importDefault(require("./DB"));
-const socketHelper_1 = require("./helpers/socketHelper");
 const logger_1 = require("./shared/logger");
+const socket_1 = require("./app/socket/socket");
 //uncaught exception
 process.on('uncaughtException', error => {
-    logger_1.errorLogger.error('UnhandleException Detected', error, error);
+    logger_1.errorLogger.error('UnhandledException Detected', error, error);
     process.exit(1);
 });
-let server;
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -33,29 +31,21 @@ function main() {
             mongoose_1.default.connect(config_1.default.database_url);
             logger_1.logger.info(colors_1.default.green('🚀 Database connected successfully'));
             const port = typeof config_1.default.port === 'number' ? config_1.default.port : Number(config_1.default.port);
-            server = app_1.default.listen(port, config_1.default.ip_address, () => {
+            app_1.server.listen(port, config_1.default.ip_address, () => {
                 logger_1.logger.info(colors_1.default.yellow(`♻️  Application listening on port:${config_1.default.port}`));
             });
             //socket
-            const io = new socket_io_1.Server(server, {
-                pingTimeout: 60000,
-                cors: {
-                    origin: '*',
-                },
-            });
-            socketHelper_1.socketHelper.socket(io);
-            (0, socketHelper_1.initializeSocketConnection)(io);
-            //@ts-ignore
-            global.io = io;
+            (0, socket_1.setupSocket)(app_1.server);
         }
         catch (error) {
+            console.log(error);
             logger_1.errorLogger.error(colors_1.default.red('🤢 Failed to connect Database'));
         }
-        //handle unhandleRejection
+        //handle unhandledRejection
         process.on('unhandledRejection', error => {
-            if (server) {
-                server.close(() => {
-                    logger_1.errorLogger.error('UnhandleRejection Detected', error, error);
+            if (app_1.server) {
+                app_1.server.close(() => {
+                    logger_1.errorLogger.error('UnhandledRejection Detected', error, error);
                     process.exit(1);
                 });
             }
@@ -69,7 +59,7 @@ main();
 //SIGTERM
 process.on('SIGTERM', () => {
     logger_1.logger.info('SIGTERM IS RECEIVE');
-    if (server) {
-        server.close();
+    if (app_1.server) {
+        app_1.server.close();
     }
 });

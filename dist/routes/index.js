@@ -12,6 +12,8 @@ const medicine_route_1 = require("../app/modules/medicine/medicine.route");
 const doctorSchema_router_1 = require("../app/modules/doctorSchedule/doctorSchema.router");
 const appointment_route_1 = require("../app/modules/appointment/appointment.route");
 const medicalRecord_route_1 = require("../app/modules/medicalRecord/medicalRecord.route");
+const chat_route_1 = require("../app/modules/chat/chat.route");
+const notification_route_1 = require("../app/modules/notification/notification.route");
 const router = express_1.default.Router();
 const apiRoutes = [
     { path: '/user', route: user_route_1.UserRoutes },
@@ -22,13 +24,8 @@ const apiRoutes = [
     { path: '/schedule', route: doctorSchema_router_1.DoctorScheduleRouter },
     { path: '/appointment', route: appointment_route_1.AppointmentRouter },
     { path: '/medical-record', route: medicalRecord_route_1.MedicalRecordRoutes },
-    // { path: '/faq', route: FaqRoutes },
-    // { path: '/review', route: ReviewRoutes },
-    // { path: '/terms', route: TermsAndConditionRoutes },
-    // { path: '/subscribtion', route: SubscriptionRoutes },
-    // { path: '/package', route: PackageRoutes },
-    // { path: '/notification', route: NotificationRoutes },
-    // { path: '/contact', route: ContactsRoutes },
+    { path: '/chat', route: chat_route_1.ChatRoutes },
+    { path: '/notification', route: notification_route_1.NotificationRoutes },
 ];
 apiRoutes.forEach(route => router.use(route.path, route.route));
 exports.default = router;

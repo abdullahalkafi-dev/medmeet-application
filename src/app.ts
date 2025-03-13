@@ -6,15 +6,17 @@ import router from './routes';
 import http from 'http';
 import cookieParser from 'cookie-parser';
 import { Morgan } from './shared/morgen';
-
+import admin from 'firebase-admin';
+import ServiceAccount from '../medmeet-admin.json';
 const app = express();
 
 //morgan
 app.use(Morgan.successHandler);
 app.use(Morgan.errorHandler);
-
+admin.initializeApp({
+  credential: admin.credential.cert(ServiceAccount as admin.ServiceAccount),
+});
 //body parser
-
 app.use(
   cors({
     origin: '*',

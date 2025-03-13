@@ -63,7 +63,7 @@ const reviewValidation = z.object({
       .min(1, 'Rating must be at least 1')
       .max(5, 'Rating must be at most 5'),
 
-    review: z.string({ required_error: 'Review is required' }).min(6, {
+    review: z.string({ required_error: 'Review is required' }).min(1, {
       message: 'Review must be at least 6 characters long',
     }),
   }),

@@ -130,6 +130,15 @@ const doctorAppointmentCounts = (0, catchAsync_1.default)((req, res) => __awaite
         data: result,
     });
 }));
+const getAllAppointments = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield appointment_service_1.AppointmentServices.getAllAppointments(req.query);
+    (0, sendResponse_1.default)(res, {
+        success: true,
+        statusCode: http_status_codes_1.StatusCodes.OK,
+        message: 'All appointments fetched successfully',
+        data: result,
+    });
+}));
 exports.AppointmentControllers = {
     bookAppointment,
     getUserAppointments,
@@ -141,5 +150,6 @@ exports.AppointmentControllers = {
     addPrescriptionToAppointment,
     appointmentStatusUpdate,
     doctorAppointments,
-    doctorAppointmentCounts
+    doctorAppointmentCounts,
+    getAllAppointments
 };

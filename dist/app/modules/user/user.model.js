@@ -31,7 +31,6 @@ const userSchema = new mongoose_1.Schema({
     email: {
         type: String,
         required: true,
-        unique: true,
     },
     phoneNumber: {
         type: String,
@@ -74,6 +73,9 @@ const userSchema = new mongoose_1.Schema({
     isAllFieldsFilled: {
         type: Boolean,
         default: false,
+    },
+    fcmToken: {
+        type: String,
     },
     authentication: {
         type: {

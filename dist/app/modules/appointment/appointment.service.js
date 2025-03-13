@@ -20,6 +20,8 @@ const doctorSchedule_model_1 = require("../doctorSchedule/doctorSchedule.model")
 const AppError_1 = __importDefault(require("../../errors/AppError"));
 const user_model_1 = require("../user/user.model");
 const doctor_model_1 = require("../doctor/doctor.model");
+const firebase_admin_1 = __importDefault(require("firebase-admin"));
+const notification_service_1 = require("../notification/notification.service");
 const bookAppointment = (req) => __awaiter(void 0, void 0, void 0, function* () {
     const appointmentData = JSON.parse(req.body.data); // Parse JSON data from form-data
     const schedule = yield doctorSchedule_model_1.DoctorSchedule.findById(appointmentData.schedule);
@@ -28,6 +30,15 @@ const bookAppointment = (req) => __awaiter(void 0, void 0, void 0, function* () 
     }
     const { doctor: doctorId, user: userId, slot: { startTime, endTime }, patientDetails: { fullName, gender, age, problemDescription }, } = appointmentData;
     const user = yield user_model_1.User.findById(userId).lean().exec();
+    const doctor = yield doctor_model_1.Doctor.findById(doctorId).lean().exec();
+    const fcmToken = doctor === null || doctor === void 0 ? void 0 : doctor.fcmToken;
+    const isDoctorScheduled = yield doctorSchedule_model_1.DoctorSchedule.findOne({
+        doctor: doctorId,
+        _id: schedule._id,
+    });
+    if (!isDoctorScheduled) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Doctor not scheduled');
+    }
     if (!user) {
         throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'User not found');
     }
@@ -53,6 +64,10 @@ const bookAppointment = (req) => __awaiter(void 0, void 0, void 0, function* () 
             attachmentPdfs = req.files.doc.map((file) => `/docs/${file.filename}`);
         }
     }
+    // const order= OrderModel.findById(appointmentData.orderId);
+    // if(!order){
+    //   throw new AppError(StatusCodes.BAD_REQUEST, 'Order not found');
+    // }
     const appointment = yield appointment_model_1.Appointment.create({
         doctor: doctorId,
         user: userId,
@@ -63,6 +78,25 @@ const bookAppointment = (req) => __awaiter(void 0, void 0, void 0, function* () 
         attachmentPdf: attachmentPdfs,
         status: 'Upcoming',
     });
+    // await OrderService.updateOrder(appointmentData.orderId,{appointmentId:appointment
+    // ._id});
+    if (appointment && fcmToken) {
+        const message = {
+            token: fcmToken, // Device FCM Token
+            notification: {
+                title: 'New Appointment', // Title of the notification
+                body: `You have an appointment with ${user.name} at ${startTime}`, // Message
+            },
+            data: {
+                extraData: `You have an appointment with ${user.name} at ${startTime}`,
+            },
+        };
+        yield firebase_admin_1.default.messaging().send(message);
+        yield notification_service_1.NotificationService.createNotification({
+            body: `You have an appointment with ${user.name} at ${startTime}`,
+            user: doctorId,
+        });
+    }
     return appointment;
 });
 const getUserAppointments = (userId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -104,6 +138,7 @@ const getUserAppointments = (userId) => __awaiter(void 0, void 0, void 0, functi
                 date: '$scheduleDetails.date',
                 startTime: '$slot.startTime',
                 endTime: '$slot.endTime',
+                accountID: '$doctorDetails._id',
                 status: 1,
             },
         },
@@ -153,6 +188,7 @@ const getAppointmentDetails = (id) => __awaiter(void 0, void 0, void 0, function
             $project: {
                 _id: 1,
                 doctor: {
+                    _id: '$doctorDetails._id',
                     name: '$doctorDetails.name',
                     image: '$doctorDetails.image',
                     country: '$doctorDetails.country',
@@ -167,6 +203,7 @@ const getAppointmentDetails = (id) => __awaiter(void 0, void 0, void 0, function
                 startTime: '$slot.startTime',
                 endTime: '$slot.endTime',
                 user: {
+                    _id: '$userDetails._id',
                     name: '$userDetails.name',
                     country: '$userDetails.country',
                     phoneNumber: '$userDetails.phoneNumber',
@@ -179,6 +216,7 @@ const getAppointmentDetails = (id) => __awaiter(void 0, void 0, void 0, function
                 attachmentPdf: 1,
                 review: 1,
                 status: 1,
+                isNoteHidden: 1,
             },
         },
     ]);
@@ -190,6 +228,7 @@ const getAppointmentDetails = (id) => __awaiter(void 0, void 0, void 0, function
 });
 const reviewAppointment = (id, userId, payload) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
+    console.log(id, userId, payload);
     const isValidUserForReview = yield appointment_model_1.Appointment.findOne({
         _id: id,
         user: userId,
@@ -215,14 +254,19 @@ const reviewAppointment = (id, userId, payload) => __awaiter(void 0, void 0, voi
     const newAvgRating = ((_a = avgRating[0]) === null || _a === void 0 ? void 0 : _a.avgRating)
         ? parseFloat(avgRating[0].avgRating.toFixed(1))
         : 0;
-    yield doctor_model_1.Doctor.findByIdAndUpdate(appointment.doctor, {
+    const doctor = yield doctor_model_1.Doctor.findByIdAndUpdate(appointment.doctor, {
         avgRating: newAvgRating,
-    });
+    }, { new: true });
     return appointment;
 });
 const getAllUserPrescriptions = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     const appointments = yield appointment_model_1.Appointment.aggregate([
-        { $match: { user: new mongoose_1.Types.ObjectId(userId) } },
+        {
+            $match: {
+                user: new mongoose_1.Types.ObjectId(userId),
+                prescription: { $exists: true, $ne: null },
+            },
+        },
         {
             $lookup: {
                 from: 'doctors',
@@ -254,14 +298,20 @@ const getAllUserPrescriptions = (userId) => __awaiter(void 0, void 0, void 0, fu
                 endTime: '$slot.endTime',
                 status: 1,
                 prescription: 1,
-                notes: 1,
+                doctorNote: 1,
             },
         },
     ]);
+    console.log(appointments);
     return appointments;
 });
-const addNoteToAppointment = (appointmentId, note) => __awaiter(void 0, void 0, void 0, function* () {
-    const appointment = yield appointment_model_1.Appointment.findByIdAndUpdate(appointmentId, { doctorNote: note.note }, { new: true, upsert: true });
+const addNoteToAppointment = (appointmentId, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    const validFields = ['note', 'isNoteHidden'];
+    const isValidField = Object.keys(payload).every(field => validFields.includes(field));
+    if (!isValidField) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Invalid field');
+    }
+    const appointment = yield appointment_model_1.Appointment.findByIdAndUpdate(appointmentId, Object.assign({ doctorNote: payload.note }, payload), { new: true, upsert: true });
     return appointment;
 });
 const toggleIsNoteHidden = (appointmentId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -307,6 +357,15 @@ const doctorAppointments = (doctorId, status) => __awaiter(void 0, void 0, void 
         { $unwind: '$doctorDetails' },
         {
             $lookup: {
+                from: 'users',
+                localField: 'user',
+                foreignField: '_id',
+                as: 'userDetails',
+            },
+        },
+        { $unwind: '$userDetails' },
+        {
+            $lookup: {
                 from: 'doctorschedules',
                 localField: 'schedule',
                 foreignField: '_id',
@@ -326,9 +385,10 @@ const doctorAppointments = (doctorId, status) => __awaiter(void 0, void 0, void 
         {
             $project: {
                 _id: 1,
-                name: '$doctorDetails.name',
-                image: '$doctorDetails.image',
+                name: '$userDetails.name',
+                image: '$userDetails.image',
                 specialist: '$specialistDetails.name',
+                accountID: '$userDetails._id',
                 date: '$scheduleDetails.date',
                 startTime: '$slot.startTime',
                 endTime: '$slot.endTime',
@@ -351,7 +411,102 @@ const doctorAppointmentCounts = (doctorId) => __awaiter(void 0, void 0, void 0, 
         doctor: doctorId,
         status: 'Cancelled',
     });
-    return { upcoming, completed, cancelled, total: upcoming + completed + cancelled };
+    return {
+        upcoming,
+        completed,
+        cancelled,
+        total: upcoming + completed + cancelled,
+    };
+});
+const getAllAppointments = (searchParams_1, ...args_1) => __awaiter(void 0, [searchParams_1, ...args_1], void 0, function* (searchParams, page = 1, limit = 9999999999999) {
+    const { date, name } = searchParams;
+    const matchConditions = {};
+    if (date) {
+        const [day, month, year] = date.split('-');
+        const formattedDate = new Date(`${year}-${month}-${day}`);
+        matchConditions['scheduleDetails.date'] = formattedDate;
+    }
+    if (name) {
+        matchConditions['$or'] = [
+            { 'userDetails.name': { $regex: name, $options: 'i' } },
+            { 'doctorDetails.name': { $regex: name, $options: 'i' } },
+        ];
+    }
+    const appointments = yield appointment_model_1.Appointment.aggregate([
+        {
+            $lookup: {
+                from: 'doctors',
+                localField: 'doctor',
+                foreignField: '_id',
+                as: 'doctorDetails',
+            },
+        },
+        { $unwind: '$doctorDetails' },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'user',
+                foreignField: '_id',
+                as: 'userDetails',
+            },
+        },
+        { $unwind: '$userDetails' },
+        {
+            $lookup: {
+                from: 'doctorschedules',
+                localField: 'schedule',
+                foreignField: '_id',
+                as: 'scheduleDetails',
+            },
+        },
+        { $unwind: '$scheduleDetails' },
+        {
+            $lookup: {
+                from: 'categories',
+                localField: 'doctorDetails.specialist',
+                foreignField: '_id',
+                as: 'specialistDetails',
+            },
+        },
+        { $unwind: '$specialistDetails' },
+        { $match: matchConditions },
+        {
+            $project: {
+                _id: 1,
+                doctor: {
+                    name: '$doctorDetails.name',
+                    image: '$doctorDetails.image',
+                    country: '$doctorDetails.country',
+                    aboutDoctor: '$doctorDetails.aboutDoctor',
+                    clinic: '$doctorDetails.clinic',
+                    clinicAddress: '$doctorDetails.clinicAddress',
+                    experience: '$doctorDetails.experience',
+                    specialist: '$specialistDetails.name',
+                    consultationFee: '$doctorDetails.consultationFee',
+                },
+                date: '$scheduleDetails.date',
+                startTime: '$slot.startTime',
+                endTime: '$slot.endTime',
+                user: {
+                    name: '$userDetails.name',
+                    country: '$userDetails.country',
+                    phoneNumber: '$userDetails.phoneNumber',
+                    image: '$userDetails.image',
+                },
+                prescription: 1,
+                doctorNote: 1,
+                patientDetails: 1,
+                attachmentImage: 1,
+                attachmentPdf: 1,
+                review: 1,
+                status: 1,
+                isNoteHidden: 1,
+            },
+        },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+    ]);
+    return appointments;
 });
 exports.AppointmentServices = {
     bookAppointment,
@@ -365,4 +520,5 @@ exports.AppointmentServices = {
     appointmentStatusUpdate,
     doctorAppointments,
     doctorAppointmentCounts,
+    getAllAppointments,
 };

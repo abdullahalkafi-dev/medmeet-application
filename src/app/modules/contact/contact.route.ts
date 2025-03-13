@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.post(
   '/create-contact',
-  fileUploadHandler(),
+  fileUploadHandler,
   auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   (req: Request, res: Response, next: NextFunction) => {
     req.body = ContactValiationZodSchema.ContactValiation.parse(

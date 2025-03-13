@@ -1,10 +1,7 @@
-import { Types } from "mongoose";
+import { Types } from 'mongoose';
+import { io } from '../socket';
+import { ChatServices } from '../../modules/chat/chat.service';
 
-
-import { io } from "../socket";
-import { ChatServices } from "../../modules/chat/chat.service";
-
-                                   
 export const handleSendMessage = (data: {
   senderId: Types.ObjectId;
   receiverId: Types.ObjectId;
@@ -13,20 +10,19 @@ export const handleSendMessage = (data: {
   message?: string;
   seenBy: string[];
   file?: string;
- 
-
 }) => {
-  // //sender
-  // io.emit(`receiver-${data.senderId}`, {
-  //   senderId: data.senderId,
-  //   receiverId: data.receiverId,
-  //   senderModel: data.senderModel,
-  //   receiverModel: data.receiverModel,
-  //   message: data.message,
-  //   file: data.file,
-  //   seenBy: data.seenBy,
-  // });
-  //receiver
+   console.log(`
+    
+    
+    
+    
+    
+    ${data}
+    
+    
+    
+    
+    `);
   io.emit(`receiver-${data.receiverId}`, {
     senderId: data.senderId,
     receiverId: data.receiverId,
@@ -38,7 +34,7 @@ export const handleSendMessage = (data: {
   });
 
   if (data.message && data.receiverId && data.senderId) {
-    console.log("inner",data);
+    console.log('inner', data);
     ChatServices.createChat({
       senderId: new Types.ObjectId(data.senderId),
       receiverId: new Types.ObjectId(data.receiverId),

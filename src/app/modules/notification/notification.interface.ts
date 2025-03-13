@@ -1,12 +1,6 @@
-import { Model, Types } from 'mongoose';
+import { Types } from 'mongoose';
 
-export type INotification = {
-  text: string;
-  receiver?: Types.ObjectId;
-  read: boolean;
-  type?: string;
-  name?: string;
-  image?: string;
+export type TNotification = {
+  body: string;
+  user: Types.ObjectId;
 };
-
-export type NotificationModel = Model<INotification>;

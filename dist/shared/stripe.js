@@ -7,5 +7,5 @@ exports.stripe = void 0;
 const stripe_1 = __importDefault(require("stripe"));
 const config_1 = __importDefault(require("../config"));
 exports.stripe = new stripe_1.default(config_1.default.stripe_secret_key, {
-    apiVersion: '2024-09-30.acacia',
+    apiVersion: '2025-02-24.acacia',
 });

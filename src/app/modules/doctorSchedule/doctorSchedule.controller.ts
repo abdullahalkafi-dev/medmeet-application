@@ -32,9 +32,7 @@ const getDoctorSchedules = catchAsync(async (req: Request, res: Response) => {
 const getAvailableSlots = catchAsync(async (req: Request, res: Response) => {
   const { doctorId, date } = req.query;
   if (!doctorId || !date) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ message: 'doctorId and date are required' });
+throw new Error('Doctor ID and date are required');
   }
   const slots = await DoctorScheduleService.getAvailableSlots(
     doctorId as string,

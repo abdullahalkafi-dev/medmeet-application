@@ -35,6 +35,7 @@ async function main() {
     errorLogger.error(colors.red('🤢 Failed to connect Database'));
   }
 
+  
   //handle unhandledRejection
   process.on('unhandledRejection', error => {
     if (server) {

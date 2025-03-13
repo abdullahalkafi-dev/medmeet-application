@@ -22,8 +22,10 @@ const auth = (...roles) => (req, res, next) => __awaiter(void 0, void 0, void 0,
         if (!tokenWithBearer) {
             throw new AppError_1.default(http_status_codes_1.StatusCodes.UNAUTHORIZED, 'You are not authorized');
         }
+        console.log(tokenWithBearer);
         if (tokenWithBearer && tokenWithBearer.startsWith('Bearer')) {
             const token = tokenWithBearer.split(' ')[1];
+            console.log(token);
             //verify token
             const verifyUser = jwtHelper_1.jwtHelper.verifyToken(token, config_1.default.jwt.jwt_secret);
             //set user to header

@@ -340,11 +340,18 @@ const getAllUserPrescriptions = async (userId: string) => {
         endTime: '$slot.endTime',
         status: 1,
         prescription: 1,
-        doctorNote: 1,
+        doctorNote: {
+          $cond: [
+            { $eq: ["$isNoteHidden", true] },
+            "$$REMOVE",
+            "$doctorNote"
+          ]
+        },
+        isNoteHidden: 1,
       },
     },
   ]);
-  console.log(appointments);
+  
   return appointments;
 };
 const addNoteToAppointment = async (appointmentId: string, payload: any) => {

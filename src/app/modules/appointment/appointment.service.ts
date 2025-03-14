@@ -136,8 +136,7 @@ const getUserAppointments = async (userId: string) => {
     { $unwind: '$specialistDetails' },
     {
       $sort: { 'scheduleDetails.date': -1 },
-    }
-    ,
+    },
     {
       $project: {
         _id: 1,
@@ -341,17 +340,13 @@ const getAllUserPrescriptions = async (userId: string) => {
         status: 1,
         prescription: 1,
         doctorNote: {
-          $cond: [
-            { $eq: ["$isNoteHidden", true] },
-            "$$REMOVE",
-            "$doctorNote"
-          ]
+          $cond: [{ $eq: ['$isNoteHidden', true] }, '$$REMOVE', '$doctorNote'],
         },
         isNoteHidden: 1,
       },
     },
   ]);
-  
+
   return appointments;
 };
 const addNoteToAppointment = async (appointmentId: string, payload: any) => {
@@ -395,6 +390,29 @@ const addPrescriptionToAppointment = async (
     { prescription: attachmentPdf },
     { new: true, upsert: true }
   );
+
+  const [user, doctor] = await Promise.all([
+    User.findById(appointment.user),
+    Doctor.findById(appointment.doctor),
+  ]);
+  if (user && doctor && user.fcmToken) {
+    const message = {
+      token: user.fcmToken, // Device FCM Token
+      notification: {
+        title: 'New Prescription', // Title of the notification
+        body: `You have a new prescription from ${doctor.name}`, // Message
+      },
+      data: {
+        extraData: `You have a new prescription from ${doctor.name}`,
+      },
+    };
+    await admin.messaging().send(message);
+    await NotificationService.createNotification({
+      body: `You have a new prescription from ${doctor.name}`, // Message
+      user: appointment.user.toString(),
+    });
+  }
+
   return appointment;
 };
 const appointmentStatusUpdate = async (

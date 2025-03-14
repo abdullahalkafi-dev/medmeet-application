@@ -130,6 +130,9 @@ const getUserAppointments = (userId) => __awaiter(void 0, void 0, void 0, functi
         },
         { $unwind: '$specialistDetails' },
         {
+            $sort: { 'scheduleDetails.date': -1 },
+        },
+        {
             $project: {
                 _id: 1,
                 name: '$doctorDetails.name',
@@ -233,10 +236,14 @@ const reviewAppointment = (id, userId, payload) => __awaiter(void 0, void 0, voi
         _id: id,
         user: userId,
     });
+    const userData = yield user_model_1.User.findById(userId);
+    if (!userData) {
+        throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'User not found');
+    }
     if (!isValidUserForReview) {
         throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'You are not allowed to review this appointment');
     }
-    const appointment = yield appointment_model_1.Appointment.findByIdAndUpdate(id, { review: Object.assign(Object.assign({}, payload), { createdAt: new Date() }) }, { new: true });
+    const appointment = (yield appointment_model_1.Appointment.findByIdAndUpdate(id, { review: Object.assign(Object.assign({}, payload), { createdAt: new Date() }) }, { new: true }));
     if (!appointment) {
         throw new AppError_1.default(http_status_codes_1.StatusCodes.BAD_REQUEST, 'Appointment not found');
     }
@@ -257,6 +264,20 @@ const reviewAppointment = (id, userId, payload) => __awaiter(void 0, void 0, voi
     const doctor = yield doctor_model_1.Doctor.findByIdAndUpdate(appointment.doctor, {
         avgRating: newAvgRating,
     }, { new: true });
+    console.log(appointment);
+    if (doctor && doctor.fcmToken) {
+        const message = {
+            token: doctor.fcmToken, // Device FCM Token
+            notification: {
+                title: 'New Review', // Title of the notification
+                body: `You got ${payload.rating} stars from ${userData.name}`, // Message
+            },
+            data: {
+                extraData: `You got ${payload.rating} stars from ${userData.name}`,
+            },
+        };
+        yield firebase_admin_1.default.messaging().send(message);
+    }
     return appointment;
 });
 const getAllUserPrescriptions = (userId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -298,11 +319,17 @@ const getAllUserPrescriptions = (userId) => __awaiter(void 0, void 0, void 0, fu
                 endTime: '$slot.endTime',
                 status: 1,
                 prescription: 1,
-                doctorNote: 1,
+                doctorNote: {
+                    $cond: [
+                        { $eq: ["$isNoteHidden", true] },
+                        "$$REMOVE",
+                        "$doctorNote"
+                    ]
+                },
+                isNoteHidden: 1,
             },
         },
     ]);
-    console.log(appointments);
     return appointments;
 });
 const addNoteToAppointment = (appointmentId, payload) => __awaiter(void 0, void 0, void 0, function* () {

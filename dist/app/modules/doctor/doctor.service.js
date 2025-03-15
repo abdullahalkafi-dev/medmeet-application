@@ -107,6 +107,8 @@ const getDoctorProfileFromDB = (doctor) => __awaiter(void 0, void 0, void 0, fun
     return result;
 });
 const updateDoctorProfileToDB = (doctorId, payload) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log(payload);
+    console.log(doctorId);
     const { id } = doctorId;
     const isExistDoctor = yield doctor_model_1.Doctor.isExistDoctorById(id);
     if (!isExistDoctor) {
@@ -212,7 +214,7 @@ const getAllDoctors = (query, req) => __awaiter(void 0, void 0, void 0, function
     if (user.role === 'DOCTOR') {
         dirQuery = { _id: { $ne: req.user.id } };
     }
-    const doctorQuery = new QueryBuilder_1.QueryBuilder(doctor_model_1.Doctor.find(dirQuery).populate('specialist'), query)
+    const doctorQuery = new QueryBuilder_1.QueryBuilder(doctor_model_1.Doctor.find(Object.assign(Object.assign({ status: 'active' }, dirQuery), { verified: true, isAllFieldsFilled: true })).populate('specialist'), query)
         .search(['name', 'country', 'clinic'])
         .filter()
         .sort()

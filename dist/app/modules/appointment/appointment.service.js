@@ -320,11 +320,7 @@ const getAllUserPrescriptions = (userId) => __awaiter(void 0, void 0, void 0, fu
                 status: 1,
                 prescription: 1,
                 doctorNote: {
-                    $cond: [
-                        { $eq: ["$isNoteHidden", true] },
-                        "$$REMOVE",
-                        "$doctorNote"
-                    ]
+                    $cond: [{ $eq: ['$isNoteHidden', true] }, '$$REMOVE', '$doctorNote'],
                 },
                 isNoteHidden: 1,
             },
@@ -357,6 +353,27 @@ const addPrescriptionToAppointment = (appointmentId, req) => __awaiter(void 0, v
     }
     console.log(attachmentPdf);
     const appointment = yield appointment_model_1.Appointment.findByIdAndUpdate(appointmentId, { prescription: attachmentPdf }, { new: true, upsert: true });
+    const [user, doctor] = yield Promise.all([
+        user_model_1.User.findById(appointment.user),
+        doctor_model_1.Doctor.findById(appointment.doctor),
+    ]);
+    if (user && doctor && user.fcmToken) {
+        const message = {
+            token: user.fcmToken, // Device FCM Token
+            notification: {
+                title: 'New Prescription', // Title of the notification
+                body: `You have a new prescription from ${doctor.name}`, // Message
+            },
+            data: {
+                extraData: `You have a new prescription from ${doctor.name}`,
+            },
+        };
+        yield firebase_admin_1.default.messaging().send(message);
+        yield notification_service_1.NotificationService.createNotification({
+            body: `You have a new prescription from ${doctor.name}`, // Message
+            user: appointment.user.toString(),
+        });
+    }
     return appointment;
 });
 const appointmentStatusUpdate = (appointmentId, status) => __awaiter(void 0, void 0, void 0, function* () {

@@ -250,7 +250,12 @@ const getAllDoctors = async (query: any, req: any) => {
   }
 
   const doctorQuery = new QueryBuilder(
-    Doctor.find({dirQuery,verified:true,isAllFieldsFilled:true}).populate('specialist'),
+    Doctor.find({
+      status: 'active',
+      ...dirQuery,
+    verified: true,
+    isAllFieldsFilled: true,
+    }).populate('specialist'),
     query
   )
     .search(['name', 'country', 'clinic'])

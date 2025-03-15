@@ -412,7 +412,6 @@ const addPrescriptionToAppointment = async (
       user: appointment.user.toString(),
     });
   }
-
   return appointment;
 };
 const appointmentStatusUpdate = async (

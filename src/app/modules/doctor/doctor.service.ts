@@ -75,6 +75,7 @@ const loginDoctor = async (
   return { accessToken, refreshToken, user: userWithoutPassword };
 };
 const getDoctorProfileFromDB = async (doctor: JwtPayload) => {
+
   const { id } = doctor;
   const isExistDoctor = await Doctor.findById(id).populate('specialist').lean();
   if (!isExistDoctor) {
@@ -115,6 +116,8 @@ const updateDoctorProfileToDB = async (
   doctorId: JwtPayload,
   payload: Partial<TDoctor>
 ): Promise<Partial<TDoctor | null>> => {
+  console.log(payload);
+  console.log(doctorId);
   const { id } = doctorId;
 
   const isExistDoctor = await Doctor.isExistDoctorById(id);
@@ -247,7 +250,7 @@ const getAllDoctors = async (query: any, req: any) => {
   }
 
   const doctorQuery = new QueryBuilder(
-    Doctor.find(dirQuery).populate('specialist'),
+    Doctor.find({dirQuery,verified:true,isAllFieldsFilled:true}).populate('specialist'),
     query
   )
     .search(['name', 'country', 'clinic'])

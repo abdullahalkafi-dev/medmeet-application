@@ -11,18 +11,6 @@ export const handleSendMessage = (data: {
   seenBy: string[];
   file?: string;
 }) => {
-   console.log(`
-    
-    
-    
-    
-    
-    ${data}
-    
-    
-    
-    
-    `);
   io.emit(`receiver-${data.receiverId}`, {
     senderId: data.senderId,
     receiverId: data.receiverId,

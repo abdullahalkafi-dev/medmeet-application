@@ -46,7 +46,7 @@ const getDoctorProfile = catchAsync(async (req: Request, res: Response) => {
 
 const updateDoctorProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const doctor = req.user as JwtPayload;
+    const doctor = req.user as JwtPayload; 
     let image;
     let professionalIdFront;
     let professionalIdBack;

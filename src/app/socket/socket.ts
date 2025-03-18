@@ -4,6 +4,9 @@ import { Types } from 'mongoose';
 import { ChatRoom } from '../modules/chat/chat.model';
 
 export const users = new Map();
+
+export const activeChatUsers = new Map(); // Map to track active chat sessions
+
 let io: Server; // Store io instance globally
 const setupSocket = (server: any) => {
   io = new Server(server, {
@@ -19,12 +22,17 @@ const setupSocket = (server: any) => {
       io.emit('onlineUsers', Array.from(users.keys()));
     });
 
+    socket.on('activeChat', data => {
+      // data contains { userId, activeChatPartnerId }
+      if (data.activeChatPartnerId) {
+        activeChatUsers.set(data.userId, data.activeChatPartnerId);
+      } else {
+        activeChatUsers.delete(data.userId);
+      }
+    });
     socket.on('sendMessage', textData => {
-      console.log(textData);
-
       const data = JSON.parse(textData);
       const { senderId, receiverId, message } = data;
-      console.log(data);
 
       const updateOrCreateChatRoom = async () => {
         try {
@@ -125,6 +133,7 @@ const setupSocket = (server: any) => {
       users.forEach((socketId, userId) => {
         if (socketId === socket.id) {
           users.delete(userId);
+          activeChatUsers.delete(userId); // Remove user from active chat users
         }
       });
     });

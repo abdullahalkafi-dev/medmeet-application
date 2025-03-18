@@ -1,7 +1,6 @@
-import { Types } from 'mongoose';
 import { QueryBuilder } from '../../builder/QueryBuilder';
 import AppError from '../../errors/AppError';
-import { io } from '../../socket/socket';
+import { activeChatUsers, io } from '../../socket/socket';
 import { Doctor } from '../doctor/doctor.model';
 import { User } from '../user/user.model';
 import { IChat } from './chat.interface';
@@ -24,19 +23,27 @@ const createChat = async (chatData: IChat) => {
 
   const chat = new Chat({ ...chatData, seenBy: [chatData.senderId] });
 
-  if (chatData && isReceiverExist.fcmToken) {
-    const message = {
-      token: isReceiverExist.fcmToken, // Device FCM Token
-      notification: {
-        title: `New Message from  ${isSenderExist.name}`, // Title of the notification
-        body: `${chatData.message}`, // Message
-      },
-      data: {
-        extraData: `${chatData.message}`,
-      },
-    };
+  const activeChatPartner = activeChatUsers.get(chatData.receiverId.toString());
 
-    await admin.messaging().send(message);
+  if (activeChatPartner !== chatData.senderId.toString()) {
+   
+    if (chatData.message && chatData.receiverId && chatData.senderId) {
+   
+      if (chatData && isReceiverExist.fcmToken) {
+        const message = {
+          token: isReceiverExist.fcmToken, // Device FCM Token
+          notification: {
+            title: `New Message from  ${isSenderExist.name}`, // Title of the notification
+            body: `${chatData.message}`, // Message
+          },
+          data: {
+            extraData: `${chatData.message}`,
+          },
+        };
+
+        await admin.messaging().send(message);
+      }
+    }
   }
 
   return await chat.save();
@@ -47,7 +54,7 @@ const createChatWithImage = async (chatData: IChat, req: any) => {
     throw new AppError(400, 'Image is required.');
   }
   const { senderId, receiverId, message } = chatData;
-  console.log(req.files);
+
   const image = req.files.image[0] as Express.Multer.File;
   const imageUrl = `/images/${image.filename}`;
   chatData.file = imageUrl;
@@ -170,16 +177,13 @@ const createChatWithImage = async (chatData: IChat, req: any) => {
   };
   updateOrCreateChatRoom();
 
-
-  
-
   const chat = new Chat({ ...chatData, seenBy: [chatData.senderId] });
   if (chatData && isReceiverExist.fcmToken) {
     const message = {
       token: isReceiverExist.fcmToken, // Device FCM Token
       notification: {
         title: `New Image from  ${isSenderExist.name}`, // Title of the notification
-        body: "New Image", // Message
+        body: 'New Image', // Message
       },
       data: {
         extraData: `${chatData.message}`,

@@ -11,11 +11,13 @@ const createCategoryToDB = catchAsync(
       image = `/images/${req.files.image[0].filename}`;
     }
 
+
     const categoryData = JSON.parse(req.body.data);
     const data = {
       image,
       ...categoryData,
     };
+    console.log(data);
     const category = await CategoryService.createCategoryToDB(data);
     sendResponse(res, {
       success: true,
@@ -64,6 +66,7 @@ const updateCategory = catchAsync(
       image,
       ...categoryData,
     };
+    console.log(data);
     const result = await CategoryService.updateCategory(id, data);
 
     sendResponse(res, {

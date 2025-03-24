@@ -1,5 +1,5 @@
-import { Model, Types } from 'mongoose';
-import { USER_ROLES } from '../../../enums/user';
+import { Model, Types } from "mongoose";
+import { USER_ROLES } from "../../../enums/user";
 
 export type TDoctor = {
   name: string;
@@ -7,7 +7,7 @@ export type TDoctor = {
   email: string; // unique
   phoneNumber: string; // unique
 
-  gender: 'Male' | 'Female';
+  gender: "Male" | "Female";
   dob?: Date; //dd/mm/yyyy
   country: string;
   doctorId: string;
@@ -24,9 +24,9 @@ export type TDoctor = {
   subscription: boolean;
   password: string;
   fcmToken?: string;
-  status: 'active' | 'delete';
+  status: "active" | "delete";
   verified?: boolean;
-  approvedStatus?: 'pending' | 'approved' | 'rejected';
+  approvedStatus?: "pending" | "approved" | "rejected";
   avgRating: number;
   isAllFieldsFilled?: boolean;
   authentication?: {
@@ -43,6 +43,6 @@ export type DoctorModal = {
   isMatchPassword(password: string, hashPassword: string): boolean;
   isJWTIssuedBeforePasswordChanged(
     passwordChangedTimestamp: Date,
-    jwtIssuedTimestamp: number
+    jwtIssuedTimestamp: number,
   ): boolean;
 } & Model<TDoctor>;

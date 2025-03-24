@@ -1,24 +1,24 @@
-import { StatusCodes } from 'http-status-codes';
-import { JwtPayload, Secret } from 'jsonwebtoken';
-import { TDoctor } from './doctor.interface';
-import { Doctor } from './doctor.model';
-import unlinkFile from '../../../shared/unlinkFile';
-import AppError from '../../errors/AppError';
-import { jwtHelper } from '../../../helpers/jwtHelper';
-import config from '../../../config';
-import { QueryBuilder } from '../../builder/QueryBuilder';
-import { Appointment } from '../appointment/appointment.model';
+import { StatusCodes } from "http-status-codes";
+import { JwtPayload, Secret } from "jsonwebtoken";
+import { TDoctor } from "./doctor.interface";
+import { Doctor } from "./doctor.model";
+import unlinkFile from "../../../shared/unlinkFile";
+import AppError from "../../errors/AppError";
+import { jwtHelper } from "../../../helpers/jwtHelper";
+import config from "../../../config";
+import { QueryBuilder } from "../../builder/QueryBuilder";
+import { Appointment } from "../appointment/appointment.model";
 
 const createDoctorToDB = async (payload: Partial<TDoctor>) => {
   if (!payload.fcmToken) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Please provide fcm token');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Please provide fcm token");
   }
   // Validate required fields
   const isExist = await Doctor.findOne({
     $or: [{ email: payload.email }, { doctorId: payload.doctorId }],
   });
   if (isExist) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Doctor already exist');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Doctor already exist");
   }
   // Create doctor first
   const doctor = await Doctor.create(payload);
@@ -27,23 +27,23 @@ const createDoctorToDB = async (payload: Partial<TDoctor>) => {
 };
 
 const loginDoctor = async (
-  payload: Partial<TDoctor> & { uniqueId: string }
+  payload: Partial<TDoctor> & { uniqueId: string },
 ) => {
   const { uniqueId, password } = payload;
   console.log(payload);
   if (!payload.fcmToken) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Please provide fcm token');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Please provide fcm token");
   }
   let doctor = await Doctor.findOne({
     $or: [{ email: uniqueId }, { doctorId: uniqueId }],
-  }).select('+password');
+  }).select("+password");
   if (!doctor) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Doctor not found');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Doctor not found");
   }
 
   const isMatch = await Doctor.isMatchPassword(password!, doctor.password);
   if (!isMatch) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid credentials');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Invalid credentials");
   }
   const accessToken = jwtHelper.createToken(
     {
@@ -53,46 +53,45 @@ const loginDoctor = async (
       approvedStatus: doctor.approvedStatus,
     },
     config.jwt.jwt_secret as Secret,
-    '10000d'
+    "10000d",
   );
   //create token
   const refreshToken = jwtHelper.createToken(
     { id: doctor._id, role: doctor.role, email: doctor.email },
     config.jwt.jwt_refresh_secret as Secret,
-    '150000d'
+    "150000d",
   );
 
   if (payload.fcmToken) {
     doctor = await Doctor.findOneAndUpdate(
       { email: uniqueId },
-      { fcmToken: payload.fcmToken }
+      { fcmToken: payload.fcmToken },
     );
   }
   if (!doctor) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Doctor not found');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Doctor not found");
   }
   const { password: _, ...userWithoutPassword } = doctor.toObject();
   return { accessToken, refreshToken, user: userWithoutPassword };
 };
 const getDoctorProfileFromDB = async (doctor: JwtPayload) => {
-
   const { id } = doctor;
-  const isExistDoctor = await Doctor.findById(id).populate('specialist').lean();
+  const isExistDoctor = await Doctor.findById(id).populate("specialist").lean();
   if (!isExistDoctor) {
     throw new AppError(StatusCodes.BAD_REQUEST, "Doctor doesn't exist!");
   }
 
   const appointments = await Appointment.find({ doctor: id })
     .populate({
-      path: 'user',
-      select: 'name country image',
+      path: "user",
+      select: "name country image",
     })
-    .select('review')
+    .select("review")
     .lean();
   console.log(appointments);
 
   const appointmentWithReviews = appointments.filter(
-    (review: any) => review.review
+    (review: any) => review.review,
   );
 
   const result = {
@@ -114,7 +113,7 @@ const getDoctorProfileFromDB = async (doctor: JwtPayload) => {
 
 const updateDoctorProfileToDB = async (
   doctorId: JwtPayload,
-  payload: Partial<TDoctor>
+  payload: Partial<TDoctor>,
 ): Promise<Partial<TDoctor | null>> => {
   console.log(payload);
   console.log(doctorId);
@@ -128,7 +127,7 @@ const updateDoctorProfileToDB = async (
   if (
     payload.image &&
     isExistDoctor.image &&
-    !isExistDoctor.image.includes('default_profile.jpg') &&
+    !isExistDoctor.image.includes("default_profile.jpg") &&
     !payload.image.includes(isExistDoctor.image)
   ) {
     unlinkFile(isExistDoctor.image);
@@ -143,7 +142,7 @@ const updateDoctorProfileToDB = async (
     unlinkFile(isExistDoctor.medicalLicense);
   }
   if (payload.dob) {
-    const [day, month, year] = (payload.dob as any).split('-');
+    const [day, month, year] = (payload.dob as any).split("-");
     payload.dob = new Date(`${year}-${month}-${day}`);
     console.log(payload.dob);
   }
@@ -169,27 +168,27 @@ const updateDoctorProfileToDB = async (
     return await Doctor.findOneAndUpdate(
       { _id: id },
       { isAllFieldsFilled: true },
-      { new: true }
+      { new: true },
     );
   }
 
   return updateDoc;
 };
 const getSingleDoctor = async (id: string) => {
-  const doctor = await Doctor.findById(id).populate('specialist').lean();
+  const doctor = await Doctor.findById(id).populate("specialist").lean();
 
   const appointments = await Appointment.find({ doctor: id })
     .populate({
-      path: 'user',
-      select: 'name country image',
+      path: "user",
+      select: "name country image",
     })
-    .select('review')
+    .select("review")
     .lean();
   const TotalPatientsCount =
     new Set(appointments.map((review: any) => review.user._id)).size || 0;
 
   const withReviewsAppointment = appointments.filter(
-    (appointment: any) => appointment.review
+    (appointment: any) => appointment.review,
   );
 
   const reviews = withReviewsAppointment.map((review: any) => ({
@@ -245,20 +244,20 @@ const getAllDoctors = async (query: any, req: any) => {
   const user = req.user;
 
   let dirQuery = {};
-  if (user.role === 'DOCTOR') {
+  if (user.role === "DOCTOR") {
     dirQuery = { _id: { $ne: req.user.id } };
   }
 
   const doctorQuery = new QueryBuilder(
     Doctor.find({
-      status: 'active',
+      status: "active",
       ...dirQuery,
-    verified: true,
-    isAllFieldsFilled: true,
-    }).populate('specialist'),
-    query
+      verified: true,
+      isAllFieldsFilled: true,
+    }).populate("specialist"),
+    query,
   )
-    .search(['name', 'country', 'clinic'])
+    .search(["name", "country", "clinic"])
     .filter()
     .sort()
     .paginate()
@@ -271,28 +270,28 @@ const getAllDoctors = async (query: any, req: any) => {
 };
 const updateDoctorApprovedStatus = async (
   id: string,
-  payload: { status: string }
+  payload: { status: string },
 ) => {
   const doctor = await Doctor.findById(id);
-  const status = ['pending', 'approved', 'rejected'];
+  const status = ["pending", "approved", "rejected"];
   if (!status.includes(payload.status)) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid status');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Invalid status");
   }
   if (!doctor) {
-    throw new AppError(StatusCodes.NOT_FOUND, 'Doctor not found!');
+    throw new AppError(StatusCodes.NOT_FOUND, "Doctor not found!");
   }
   const updatedDoctor = await Doctor.findByIdAndUpdate(
     id,
     { approvedStatus: payload.status },
-    { new: true }
+    { new: true },
   );
   return updatedDoctor;
 };
 const deleteDoctor = async (id: string) => {
   const result = await Doctor.findByIdAndUpdate(
     id,
-    { status: 'delete' },
-    { new: true }
+    { status: "delete" },
+    { new: true },
   );
   return result;
 };

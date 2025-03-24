@@ -1,4 +1,4 @@
-import { model, Schema } from 'mongoose';
+import { model, Schema, Types } from 'mongoose';
 import { TAppointment } from './appointment.interface';
 const appointmentSchema = new Schema<TAppointment>(
   {
@@ -33,6 +33,7 @@ const appointmentSchema = new Schema<TAppointment>(
       review: { type: String },
       createdAt: { type: Date },
     },
+    noteForDoctors:  { type: [Types.ObjectId], default: [] },
     status: {
       type: String,
       enum: ['Upcoming', 'Completed', 'Cancelled'],

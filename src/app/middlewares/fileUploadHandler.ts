@@ -1,13 +1,13 @@
-import { Request, Response, NextFunction } from 'express';
-import fs from 'fs';
-import { StatusCodes } from 'http-status-codes';
-import multer, { FileFilterCallback } from 'multer';
-import path from 'path';
-import AppError from '../errors/AppError';
+import { Request, Response, NextFunction } from "express";
+import fs from "fs";
+import { StatusCodes } from "http-status-codes";
+import multer, { FileFilterCallback } from "multer";
+import path from "path";
+import AppError from "../errors/AppError";
 
 const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
   // Create upload folder
-  const baseUploadDir = path.join(process.cwd(), 'uploads');
+  const baseUploadDir = path.join(process.cwd(), "uploads");
   if (!fs.existsSync(baseUploadDir)) {
     fs.mkdirSync(baseUploadDir);
   }
@@ -23,22 +23,22 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
       let uploadDir;
-
+      console.log(file.fieldname);
       switch (file.fieldname) {
-        case 'image':
-        case 'professionalIdFront':
-        case 'professionalIdBack':
-          uploadDir = path.join(baseUploadDir, 'images');
+        case "image":
+        case "professionalIdFront":
+        case "professionalIdBack":
+          uploadDir = path.join(baseUploadDir, "images");
           break;
-        case 'media':
-          uploadDir = path.join(baseUploadDir, 'medias');
+        case "media":
+          uploadDir = path.join(baseUploadDir, "medias");
           break;
-        case 'doc':
-        case 'medicalLicense':
-          uploadDir = path.join(baseUploadDir, 'docs');
+        case "doc":
+        case "medicalLicense":
+          uploadDir = path.join(baseUploadDir, "docs");
           break;
         default:
-          throw new AppError(StatusCodes.BAD_REQUEST, 'File is not supported');
+          throw new AppError(StatusCodes.BAD_REQUEST, "File is not supported");
       }
       createDir(uploadDir);
       cb(null, uploadDir);
@@ -46,33 +46,33 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
 
     filename: (req, file, cb) => {
       const fileExt =
-        file.fieldname === 'medicalLicense' ||
-        file.fieldname === 'doc' ||
-        file.fieldname === 'docs'
-          ? '.pdf'
-          : '.png'; // Force .png for images and .pdf for certificates
+        file.fieldname === "medicalLicense" ||
+        file.fieldname === "doc" ||
+        file.fieldname === "docs"
+          ? ".pdf"
+          : ".png"; // Force .png for images and .pdf for certificates
       const date = new Date();
       const formattedDate = `${date.getDate()}-${
         date.getMonth() + 1
       }-${date.getFullYear()}`;
       const randomCode = () => {
         const chars =
-          'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789';
-        let result = '';
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789";
+        let result = "";
         for (let i = 0; i < 5; i++) {
           result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return result;
       };
       const originalNameWithoutExt =
-        path.parse(file.originalname).name + '-' + randomCode();
+        path.parse(file.originalname).name + "-" + randomCode();
       const fileName =
         req?.user?.id &&
-        req.url === '/update-profile' &&
-        file.fieldname == 'image'
-          ? (req.user.id + originalNameWithoutExt)
-          : originalNameWithoutExt.toLowerCase().split(' ').join('-') +
-            '-' +
+        req.url === "/update-profile" &&
+        file.fieldname == "image"
+          ? req.user.id + originalNameWithoutExt
+          : originalNameWithoutExt.toLowerCase().split(" ").join("-") +
+            "-" +
             formattedDate;
 
       cb(null, fileName + fileExt);
@@ -82,19 +82,19 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
   // File filter
   const filterFilter = (req: Request, file: any, cb: FileFilterCallback) => {
     if (
-      file.fieldname === 'image' ||
-      file.fieldname === 'professionalIdFront' ||
-      file.fieldname === 'professionalIdBack'
+      file.fieldname === "image" ||
+      file.fieldname === "professionalIdFront" ||
+      file.fieldname === "professionalIdBack"
     ) {
       if (
-        file.mimetype === 'image/jpeg' ||
-        file.mimetype === 'image/png' ||
-        file.mimetype === 'image/jpg' ||
-        file.mimetype === 'image/heif' ||
-        file.mimetype === 'image/heic' ||
-        file.mimetype === 'image/tiff' ||
-        file.mimetype === 'image/webp' ||
-        file.mimetype === 'image/avif'
+        file.mimetype === "image/jpeg" ||
+        file.mimetype === "image/png" ||
+        file.mimetype === "image/jpg" ||
+        file.mimetype === "image/heif" ||
+        file.mimetype === "image/heic" ||
+        file.mimetype === "image/tiff" ||
+        file.mimetype === "image/webp" ||
+        file.mimetype === "image/avif"
       ) {
         cb(null, true);
       } else {
@@ -103,32 +103,32 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
         cb(
           new AppError(
             StatusCodes.BAD_REQUEST,
-            'Only .jpeg, .png, .jpg, .heif, .heic, .tiff, .webp, .avif files supported'
-          )
+            "Only .jpeg, .png, .jpg, .heif, .heic, .tiff, .webp, .avif files supported",
+          ),
         );
       }
-    } else if (file.fieldname === 'media') {
-      if (file.mimetype === 'video/mp4' || file.mimetype === 'audio/mpeg') {
+    } else if (file.fieldname === "media") {
+      if (file.mimetype === "video/mp4" || file.mimetype === "audio/mpeg") {
         cb(null, true);
       } else {
         cb(
           new AppError(
             StatusCodes.BAD_REQUEST,
-            'Only .mp4, .mp3, file supported'
-          )
+            "Only .mp4, .mp3, file supported",
+          ),
         );
       }
     } else if (
-      file.fieldname === 'doc' ||
-      file.fieldname === 'medicalLicense'
+      file.fieldname === "doc" ||
+      file.fieldname === "medicalLicense"
     ) {
-      if (file.mimetype === 'application/pdf') {
+      if (file.mimetype === "application/pdf") {
         cb(null, true);
       } else {
-        cb(new AppError(StatusCodes.BAD_REQUEST, 'Only pdf supported'));
+        cb(new AppError(StatusCodes.BAD_REQUEST, "Only pdf supported"));
       }
     } else {
-      throw new AppError(StatusCodes.BAD_REQUEST, 'This file is not supported');
+      throw new AppError(StatusCodes.BAD_REQUEST, "This file is not supported");
     }
   };
 
@@ -137,12 +137,12 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
     storage: storage,
     fileFilter: filterFilter,
   }).fields([
-    { name: 'image', maxCount: 10 },
-    { name: 'media', maxCount: 10 },
-    { name: 'doc', maxCount: 10 },
-    { name: 'professionalIdFront', maxCount: 10 },
-    { name: 'professionalIdBack', maxCount: 10 },
-    { name: 'medicalLicense', maxCount: 10 },
+    { name: "image", maxCount: 10 },
+    { name: "media", maxCount: 10 },
+    { name: "doc", maxCount: 10 },
+    { name: "professionalIdFront", maxCount: 10 },
+    { name: "professionalIdBack", maxCount: 10 },
+    { name: "medicalLicense", maxCount: 10 },
   ]);
 
   return upload(req, res, next);

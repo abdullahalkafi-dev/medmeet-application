@@ -1,105 +1,131 @@
-import { Router } from 'express';
+import { Router } from "express";
 
-import validateRequest from '../../middlewares/validateRequest';
-import { AppointmentValidation } from './appointment.validation';
-import auth from '../../middlewares/auth';
-import { USER_ROLES } from '../../../enums/user';
-import fileUploadHandler from '../../middlewares/fileUploadHandler';
-import { AppointmentControllers } from './appointment.controller';
+import validateRequest from "../../middlewares/validateRequest";
+import { AppointmentValidation } from "./appointment.validation";
+import auth from "../../middlewares/auth";
+import { USER_ROLES } from "../../../enums/user";
+import fileUploadHandler from "../../middlewares/fileUploadHandler";
+import { AppointmentControllers } from "./appointment.controller";
 
 const router = Router();
 
 router.post(
-  '/book',
+  "/book",
   auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   fileUploadHandler, // Middleware for handling file uploads
   validateRequest(AppointmentValidation.createAppointmentZodSchema),
-  AppointmentControllers.bookAppointment
+  AppointmentControllers.bookAppointment,
 );
 
 router.get(
-  '/user/:userId',
+  "/user/:userId",
   auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-  AppointmentControllers.getUserAppointments
+  AppointmentControllers.getUserAppointments,
 );
 router.get(
-  '/prescriptions/:userId',
+  "/prescriptions/:userId",
   auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-  AppointmentControllers.getAllUserPrescriptions
+  AppointmentControllers.getAllUserPrescriptions,
 );
 router.get(
-  '/doctor/count/:doctorId',
+  "/doctor/count/:doctorId",
   auth(USER_ROLES.DOCTOR, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-  AppointmentControllers.doctorAppointmentCounts
+  AppointmentControllers.doctorAppointmentCounts,
 );
 router.get(
-  '/doctor/:doctorId',
+  "/doctor/:doctorId",
   auth(USER_ROLES.DOCTOR, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
-  AppointmentControllers.doctorAppointments
+  AppointmentControllers.doctorAppointments,
 );
-
 router.get(
-  '/:id',
+  "/:id",
   auth(
     USER_ROLES.USER,
     USER_ROLES.ADMIN,
     USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.DOCTOR
+    USER_ROLES.DOCTOR,
   ),
-  AppointmentControllers.getAppointmentDetails
+  AppointmentControllers.getAppointmentDetails,
 );
 router.post(
-  '/review/:id',
+  "/review/:id",
   auth(USER_ROLES.USER, USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
   validateRequest(AppointmentValidation.reviewValidation),
-  AppointmentControllers.reviewAppointment
+  AppointmentControllers.reviewAppointment,
 );
 
 router.post(
-  '/note/:id',
+  "/note/doctors/:id",
   auth(
     USER_ROLES.USER,
     USER_ROLES.ADMIN,
     USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.DOCTOR
+    USER_ROLES.DOCTOR,
+  ),
+  AppointmentControllers.addNoteWithDoctors,
+);
+
+router.post(
+  "/note/:id",
+  auth(
+    USER_ROLES.USER,
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.DOCTOR,
   ),
   validateRequest(AppointmentValidation.addNoteValidation),
-  AppointmentControllers.addNoteToAppointment
+  AppointmentControllers.addNoteToAppointment,
 );
 
 router.post(
-  '/note/toggle/:id',
+  "/note/toggle/:id",
   auth(
     USER_ROLES.USER,
     USER_ROLES.ADMIN,
     USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.DOCTOR
+    USER_ROLES.DOCTOR,
   ),
-  AppointmentControllers.toggleIsNoteHidden
+  AppointmentControllers.toggleIsNoteHidden,
 );
 
 router.post(
-  '/prescription/:id',
+  "/prescription/:id",
   auth(
     USER_ROLES.USER,
     USER_ROLES.ADMIN,
     USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.DOCTOR
+    USER_ROLES.DOCTOR,
   ),
   fileUploadHandler,
-  AppointmentControllers.addPrescriptionToAppointment
+  AppointmentControllers.addPrescriptionToAppointment,
 );
 router.post(
-  '/status/:id',
+  "/status/:id",
   auth(
     USER_ROLES.DOCTOR,
     USER_ROLES.ADMIN,
     USER_ROLES.SUPER_ADMIN,
-    USER_ROLES.USER
+    USER_ROLES.USER,
   ),
   validateRequest(AppointmentValidation.appointmentStatusUpdateValidation),
-  AppointmentControllers.appointmentStatusUpdate
+  AppointmentControllers.appointmentStatusUpdate,
 );
-router.get('/', auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), AppointmentControllers.getAllAppointments);
+
+router.get(
+  "/notes/mentions",                               
+  auth(                               
+    USER_ROLES.USER,                               
+    USER_ROLES.ADMIN,                               
+    USER_ROLES.SUPER_ADMIN,                               
+    USER_ROLES.DOCTOR,                               
+  ),                               
+  AppointmentControllers.meOnNotesMention,
+);
+
+router.get(
+  "/",
+  auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN),
+  AppointmentControllers.getAllAppointments,
+);
 
 export const AppointmentRouter = router;

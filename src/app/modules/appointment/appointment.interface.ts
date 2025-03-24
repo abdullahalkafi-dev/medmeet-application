@@ -25,6 +25,7 @@ export type TAppointment = {
     review: string;
     createdAt: Date;
   };
+  noteForDoctors?: string[];
   attachmentPdf?: string[];
   status: 'Upcoming' | 'Completed' | 'Cancelled';
 };

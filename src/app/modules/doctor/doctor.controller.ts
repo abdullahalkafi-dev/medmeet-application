@@ -1,9 +1,9 @@
-import { NextFunction, Request, Response } from 'express';
-import { StatusCodes } from 'http-status-codes';
-import catchAsync from '../../../shared/catchAsync';
-import sendResponse from '../../../shared/sendResponse';
-import { DoctorService } from './doctor.service';
-import { JwtPayload } from 'jsonwebtoken';
+import { NextFunction, Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
+import catchAsync from "../../../shared/catchAsync";
+import sendResponse from "../../../shared/sendResponse";
+import { DoctorService } from "./doctor.service";
+import { JwtPayload } from "jsonwebtoken";
 
 const createDoctorToDB = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -14,20 +14,24 @@ const createDoctorToDB = catchAsync(
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: 'Doctor created successfully',
+      message: "Doctor created successfully",
       data: doctor,
     });
-  }
+  },
 );
 
 const loginDoctor = catchAsync(async (req: Request, res: Response) => {
-  const { uniqueId, password,fcmToken } = req.body;
-  const doctor = await DoctorService.loginDoctor({ uniqueId, password ,fcmToken});
+  const { uniqueId, password, fcmToken } = req.body;
+  const doctor = await DoctorService.loginDoctor({
+    uniqueId,
+    password,
+    fcmToken,
+  });
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: 'Doctor logged in successfully',
+    message: "Doctor logged in successfully",
     data: doctor,
   });
 });
@@ -39,7 +43,7 @@ const getDoctorProfile = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: 'Profile data retrieved successfully',
+    message: "Profile data retrieved successfully",
     data: result,
   });
 });
@@ -87,27 +91,28 @@ const updateDoctorProfile = catchAsync(
     };
     const result = await DoctorService.updateDoctorProfileToDB(doctor, data);
 
+
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: 'Profile updated successfully',
+      message: "Profile updated successfully",
       data: result,
     });
-  }
+  },
 );
 
 const getAllDoctors = catchAsync(async (req: Request, res: Response) => {
   console.log(req.query);
-  if (!(req.user.role === 'ADMIN' || req.user.role === 'SUPER_ADMIN')) {
-    req.query.approvedStatus = 'approved' as any;
+  if (!(req.user.role === "ADMIN" || req.user.role === "SUPER_ADMIN")) {
+    req.query.approvedStatus = "approved" as any;
   }
 
-  const result = await DoctorService.getAllDoctors(req.query,req);
+  const result = await DoctorService.getAllDoctors(req.query, req);
 
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: 'All doctors retrieved successfully',
+    message: "All doctors retrieved successfully",
     data: result.result,
     pagination: result.meta,
   });
@@ -119,7 +124,7 @@ const getSingleDoctor = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: 'Doctor retrieved successfully',
+    message: "Doctor retrieved successfully",
     data: result,
   });
 });
@@ -127,16 +132,16 @@ const updateDoctorApprovedStatus = catchAsync(
   async (req: Request, res: Response) => {
     const result = await DoctorService.updateDoctorApprovedStatus(
       req.params.id,
-      req.body
+      req.body,
     );
 
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
-      message: 'Doctor approved successfully',
+      message: "Doctor approved successfully",
       data: result,
     });
-  }
+  },
 );
 const deleteDoctor = catchAsync(async (req: Request, res: Response) => {
   const result = await DoctorService.deleteDoctor(req.params.id);
@@ -144,7 +149,7 @@ const deleteDoctor = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     success: true,
     statusCode: StatusCodes.OK,
-    message: 'Doctor deleted successfully',
+    message: "Doctor deleted successfully",
     data: result,
   });
 });

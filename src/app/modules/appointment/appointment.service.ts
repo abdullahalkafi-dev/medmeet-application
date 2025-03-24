@@ -1,19 +1,19 @@
-import { StatusCodes } from 'http-status-codes';
-import { Types } from 'mongoose';
-import { Appointment } from './appointment.model';
-import { DoctorSchedule } from '../doctorSchedule/doctorSchedule.model';
-import AppError from '../../errors/AppError';
-import { User } from '../user/user.model';
-import { Doctor } from '../doctor/doctor.model';
-import admin from 'firebase-admin';
-import { NotificationService } from '../notification/notification.service';
+import { StatusCodes } from "http-status-codes";
+import { Types } from "mongoose";
+import { Appointment } from "./appointment.model";
+import { DoctorSchedule } from "../doctorSchedule/doctorSchedule.model";
+import AppError from "../../errors/AppError";
+import { User } from "../user/user.model";
+import { Doctor } from "../doctor/doctor.model";
+import admin, { app } from "firebase-admin";
+import { NotificationService } from "../notification/notification.service";
 
 const bookAppointment = async (req: any) => {
   const appointmentData = JSON.parse(req.body.data); // Parse JSON data from form-data
 
   const schedule = await DoctorSchedule.findById(appointmentData.schedule);
   if (!schedule) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Schedule not found');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Schedule not found");
   }
   const {
     doctor: doctorId,
@@ -29,19 +29,19 @@ const bookAppointment = async (req: any) => {
     _id: schedule._id,
   });
   if (!isDoctorScheduled) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Doctor not scheduled');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Doctor not scheduled");
   }
   if (!user) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'User not found');
+    throw new AppError(StatusCodes.BAD_REQUEST, "User not found");
   }
   const slotIndex = schedule.slots.findIndex(
-    slot => slot.startTime === startTime && slot.endTime === endTime
+    slot => slot.startTime === startTime && slot.endTime === endTime,
   );
   if (slotIndex === -1) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Slot not found');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Slot not found");
   }
   if (schedule.slots[slotIndex].isBooked) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Slot already booked');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Slot already booked");
   }
   schedule.slots[slotIndex].isBooked = true;
   schedule.slots[slotIndex].bookedBy = new Types.ObjectId(userId);
@@ -55,12 +55,12 @@ const bookAppointment = async (req: any) => {
   if (req.files) {
     if (req.files.image) {
       attachmentImages = req.files.image.map(
-        (file: Express.Multer.File) => `/images/${file.filename}`
+        (file: Express.Multer.File) => `/images/${file.filename}`,
       );
     }
     if (req.files.doc) {
       attachmentPdfs = req.files.doc.map(
-        (file: Express.Multer.File) => `/docs/${file.filename}`
+        (file: Express.Multer.File) => `/docs/${file.filename}`,
       );
     }
   }
@@ -78,7 +78,7 @@ const bookAppointment = async (req: any) => {
     patientDetails: { fullName, gender, age, problemDescription },
     attachmentImage: attachmentImages,
     attachmentPdf: attachmentPdfs,
-    status: 'Upcoming',
+    status: "Upcoming",
   });
 
   // await OrderService.updateOrder(appointmentData.orderId,{appointmentId:appointment
@@ -88,7 +88,7 @@ const bookAppointment = async (req: any) => {
     const message = {
       token: fcmToken, // Device FCM Token
       notification: {
-        title: 'New Appointment', // Title of the notification
+        title: "New Appointment", // Title of the notification
         body: `You have an appointment with ${user.name} at ${startTime}`, // Message
       },
       data: {
@@ -109,44 +109,44 @@ const getUserAppointments = async (userId: string) => {
 
     {
       $lookup: {
-        from: 'doctors',
-        localField: 'doctor',
-        foreignField: '_id',
-        as: 'doctorDetails',
+        from: "doctors",
+        localField: "doctor",
+        foreignField: "_id",
+        as: "doctorDetails",
       },
     },
-    { $unwind: '$doctorDetails' },
+    { $unwind: "$doctorDetails" },
     {
       $lookup: {
-        from: 'doctorschedules',
-        localField: 'schedule',
-        foreignField: '_id',
-        as: 'scheduleDetails',
+        from: "doctorschedules",
+        localField: "schedule",
+        foreignField: "_id",
+        as: "scheduleDetails",
       },
     },
-    { $unwind: '$scheduleDetails' },
+    { $unwind: "$scheduleDetails" },
     {
       $lookup: {
-        from: 'categories',
-        localField: 'doctorDetails.specialist',
-        foreignField: '_id',
-        as: 'specialistDetails',
+        from: "categories",
+        localField: "doctorDetails.specialist",
+        foreignField: "_id",
+        as: "specialistDetails",
       },
     },
-    { $unwind: '$specialistDetails' },
+    { $unwind: "$specialistDetails" },
     {
-      $sort: { 'scheduleDetails.date': -1 },
+      $sort: { "scheduleDetails.date": -1 },
     },
     {
       $project: {
         _id: 1,
-        name: '$doctorDetails.name',
-        image: '$doctorDetails.image',
-        specialist: '$specialistDetails.name',
-        date: '$scheduleDetails.date',
-        startTime: '$slot.startTime',
-        endTime: '$slot.endTime',
-        accountID: '$doctorDetails._id',
+        name: "$doctorDetails.name",
+        image: "$doctorDetails.image",
+        specialist: "$specialistDetails.name",
+        date: "$scheduleDetails.date",
+        startTime: "$slot.startTime",
+        endTime: "$slot.endTime",
+        accountID: "$doctorDetails._id",
         status: 1,
       },
     },
@@ -159,64 +159,64 @@ const getAppointmentDetails = async (id: string) => {
     { $match: { _id: new Types.ObjectId(id) } },
     {
       $lookup: {
-        from: 'users',
-        localField: 'user',
-        foreignField: '_id',
-        as: 'userDetails',
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "userDetails",
       },
     },
-    { $unwind: '$userDetails' },
+    { $unwind: "$userDetails" },
     {
       $lookup: {
-        from: 'doctors',
-        localField: 'doctor',
-        foreignField: '_id',
-        as: 'doctorDetails',
+        from: "doctors",
+        localField: "doctor",
+        foreignField: "_id",
+        as: "doctorDetails",
       },
     },
-    { $unwind: '$doctorDetails' },
+    { $unwind: "$doctorDetails" },
     {
       $lookup: {
-        from: 'doctorschedules',
-        localField: 'schedule',
-        foreignField: '_id',
-        as: 'scheduleDetails',
+        from: "doctorschedules",
+        localField: "schedule",
+        foreignField: "_id",
+        as: "scheduleDetails",
       },
     },
-    { $unwind: '$scheduleDetails' },
+    { $unwind: "$scheduleDetails" },
     {
       $lookup: {
-        from: 'categories',
-        localField: 'doctorDetails.specialist',
-        foreignField: '_id',
-        as: 'specialistDetails',
+        from: "categories",
+        localField: "doctorDetails.specialist",
+        foreignField: "_id",
+        as: "specialistDetails",
       },
     },
-    { $unwind: '$specialistDetails' },
+    { $unwind: "$specialistDetails" },
     {
       $project: {
         _id: 1,
         doctor: {
-          _id: '$doctorDetails._id',
-          name: '$doctorDetails.name',
-          image: '$doctorDetails.image',
-          country: '$doctorDetails.country',
-          aboutDoctor: '$doctorDetails.aboutDoctor',
-          clinic: '$doctorDetails.clinic',
-          clinicAddress: '$doctorDetails.clinicAddress',
-          experience: '$doctorDetails.experience',
-          specialist: '$specialistDetails.name',
-          consultationFee: '$doctorDetails.consultationFee',
+          _id: "$doctorDetails._id",
+          name: "$doctorDetails.name",
+          image: "$doctorDetails.image",
+          country: "$doctorDetails.country",
+          aboutDoctor: "$doctorDetails.aboutDoctor",
+          clinic: "$doctorDetails.clinic",
+          clinicAddress: "$doctorDetails.clinicAddress",
+          experience: "$doctorDetails.experience",
+          specialist: "$specialistDetails.name",
+          consultationFee: "$doctorDetails.consultationFee",
         },
-        date: '$scheduleDetails.date',
-        startTime: '$slot.startTime',
-        endTime: '$slot.endTime',
+        date: "$scheduleDetails.date",
+        startTime: "$slot.startTime",
+        endTime: "$slot.endTime",
         user: {
-          _id: '$userDetails._id',
-          name: '$userDetails.name',
-          country: '$userDetails.country',
-          phoneNumber: '$userDetails.phoneNumber',
-          image: '$userDetails.image',
+          _id: "$userDetails._id",
+          name: "$userDetails.name",
+          country: "$userDetails.country",
+          phoneNumber: "$userDetails.phoneNumber",
+          image: "$userDetails.image",
         },
         prescription: 1,
         doctorNote: 1,
@@ -243,22 +243,22 @@ const reviewAppointment = async (id: string, userId: string, payload: any) => {
   });
   const userData = await User.findById(userId);
   if (!userData) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'User not found');
+    throw new AppError(StatusCodes.BAD_REQUEST, "User not found");
   }
   if (!isValidUserForReview) {
     throw new AppError(
       StatusCodes.BAD_REQUEST,
-      'You are not allowed to review this appointment'
+      "You are not allowed to review this appointment",
     );
   }
   const appointment = (await Appointment.findByIdAndUpdate(
     id,
     { review: { ...payload, createdAt: new Date() } },
-    { new: true }
+    { new: true },
   )) as any;
 
   if (!appointment) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Appointment not found');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Appointment not found");
   }
   const avgRating = await Appointment.aggregate([
     {
@@ -267,7 +267,7 @@ const reviewAppointment = async (id: string, userId: string, payload: any) => {
     {
       $group: {
         _id: null,
-        avgRating: { $avg: '$review.rating' },
+        avgRating: { $avg: "$review.rating" },
       },
     },
   ]);
@@ -281,14 +281,14 @@ const reviewAppointment = async (id: string, userId: string, payload: any) => {
     {
       avgRating: newAvgRating,
     },
-    { new: true }
+    { new: true },
   );
   console.log(appointment);
   if (doctor && doctor.fcmToken) {
     const message = {
       token: doctor.fcmToken, // Device FCM Token
       notification: {
-        title: 'New Review', // Title of the notification
+        title: "New Review", // Title of the notification
         body: `You got ${payload.rating} stars from ${userData.name}`, // Message
       },
       data: {
@@ -310,37 +310,37 @@ const getAllUserPrescriptions = async (userId: string) => {
     },
     {
       $lookup: {
-        from: 'doctors',
-        localField: 'doctor',
-        foreignField: '_id',
-        as: 'doctorDetails',
+        from: "doctors",
+        localField: "doctor",
+        foreignField: "_id",
+        as: "doctorDetails",
       },
     },
-    { $unwind: '$doctorDetails' },
+    { $unwind: "$doctorDetails" },
     {
       $lookup: {
-        from: 'categories',
-        localField: 'doctorDetails.specialist',
-        foreignField: '_id',
-        as: 'specialistDetails',
+        from: "categories",
+        localField: "doctorDetails.specialist",
+        foreignField: "_id",
+        as: "specialistDetails",
       },
     },
-    { $unwind: '$specialistDetails' },
+    { $unwind: "$specialistDetails" },
     {
       $project: {
         _id: 1,
-        name: '$doctorDetails.name',
-        image: '$doctorDetails.image',
-        specialist: '$specialistDetails.name',
-        avgRating: '$doctorDetails.avgRating',
-        consultationFee: '$doctorDetails.consultationFee',
+        name: "$doctorDetails.name",
+        image: "$doctorDetails.image",
+        specialist: "$specialistDetails.name",
+        avgRating: "$doctorDetails.avgRating",
+        consultationFee: "$doctorDetails.consultationFee",
         date: 1,
-        startTime: '$slot.startTime',
-        endTime: '$slot.endTime',
+        startTime: "$slot.startTime",
+        endTime: "$slot.endTime",
         status: 1,
         prescription: 1,
         doctorNote: {
-          $cond: [{ $eq: ['$isNoteHidden', true] }, '$$REMOVE', '$doctorNote'],
+          $cond: [{ $eq: ["$isNoteHidden", true] }, "$$REMOVE", "$doctorNote"],
         },
         isNoteHidden: 1,
       },
@@ -350,17 +350,17 @@ const getAllUserPrescriptions = async (userId: string) => {
   return appointments;
 };
 const addNoteToAppointment = async (appointmentId: string, payload: any) => {
-  const validFields = ['note', 'isNoteHidden'];
+  const validFields = ["note", "isNoteHidden"];
   const isValidField = Object.keys(payload).every(field =>
-    validFields.includes(field)
+    validFields.includes(field),
   );
   if (!isValidField) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid field');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Invalid field");
   }
   const appointment = await Appointment.findByIdAndUpdate(
     appointmentId,
     { doctorNote: payload.note, ...payload },
-    { new: true, upsert: true }
+    { new: true, upsert: true },
   );
 
   return appointment;
@@ -368,7 +368,7 @@ const addNoteToAppointment = async (appointmentId: string, payload: any) => {
 const toggleIsNoteHidden = async (appointmentId: string) => {
   const appointment = await Appointment.findById(appointmentId);
   if (!appointment) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Appointment not found');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Appointment not found");
   }
   appointment.isNoteHidden = !appointment.isNoteHidden;
   await appointment.save();
@@ -376,7 +376,7 @@ const toggleIsNoteHidden = async (appointmentId: string) => {
 };
 const addPrescriptionToAppointment = async (
   appointmentId: string,
-  req: any
+  req: any,
 ) => {
   let attachmentPdf;
 
@@ -388,7 +388,7 @@ const addPrescriptionToAppointment = async (
   const appointment = await Appointment.findByIdAndUpdate(
     appointmentId,
     { prescription: attachmentPdf },
-    { new: true, upsert: true }
+    { new: true, upsert: true },
   );
 
   const [user, doctor] = await Promise.all([
@@ -399,7 +399,7 @@ const addPrescriptionToAppointment = async (
     const message = {
       token: user.fcmToken, // Device FCM Token
       notification: {
-        title: 'New Prescription', // Title of the notification
+        title: "New Prescription", // Title of the notification
         body: `You have a new prescription from ${doctor.name}`, // Message
       },
       data: {
@@ -416,18 +416,18 @@ const addPrescriptionToAppointment = async (
 };
 const appointmentStatusUpdate = async (
   appointmentId: string,
-  status: string
+  status: string,
 ) => {
   const appointment = await Appointment.findByIdAndUpdate(
     appointmentId,
     { status },
-    { new: true }
+    { new: true },
   );
   return appointment;
 };
 const doctorAppointments = async (doctorId: string, status: string) => {
   if (!doctorId) {
-    throw new AppError(StatusCodes.BAD_REQUEST, 'Doctor Id is required');
+    throw new AppError(StatusCodes.BAD_REQUEST, "Doctor Id is required");
   }
 
   let queries: any[] = [{ doctor: new Types.ObjectId(doctorId) }];
@@ -438,50 +438,50 @@ const doctorAppointments = async (doctorId: string, status: string) => {
     { $match: { $and: queries } },
     {
       $lookup: {
-        from: 'doctors',
-        localField: 'doctor',
-        foreignField: '_id',
-        as: 'doctorDetails',
+        from: "doctors",
+        localField: "doctor",
+        foreignField: "_id",
+        as: "doctorDetails",
       },
     },
-    { $unwind: '$doctorDetails' },
+    { $unwind: "$doctorDetails" },
     {
       $lookup: {
-        from: 'users',
-        localField: 'user',
-        foreignField: '_id',
-        as: 'userDetails',
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "userDetails",
       },
     },
-    { $unwind: '$userDetails' },
+    { $unwind: "$userDetails" },
     {
       $lookup: {
-        from: 'doctorschedules',
-        localField: 'schedule',
-        foreignField: '_id',
-        as: 'scheduleDetails',
+        from: "doctorschedules",
+        localField: "schedule",
+        foreignField: "_id",
+        as: "scheduleDetails",
       },
     },
-    { $unwind: '$scheduleDetails' },
+    { $unwind: "$scheduleDetails" },
     {
       $lookup: {
-        from: 'categories',
-        localField: 'doctorDetails.specialist',
-        foreignField: '_id',
-        as: 'specialistDetails',
+        from: "categories",
+        localField: "doctorDetails.specialist",
+        foreignField: "_id",
+        as: "specialistDetails",
       },
     },
-    { $unwind: '$specialistDetails' },
+    { $unwind: "$specialistDetails" },
     {
       $project: {
         _id: 1,
-        name: '$userDetails.name',
-        image: '$userDetails.image',
-        specialist: '$specialistDetails.name',
-        accountID: '$userDetails._id',
-        date: '$scheduleDetails.date',
-        startTime: '$slot.startTime',
-        endTime: '$slot.endTime',
+        name: "$userDetails.name",
+        image: "$userDetails.image",
+        specialist: "$specialistDetails.name",
+        accountID: "$userDetails._id",
+        date: "$scheduleDetails.date",
+        startTime: "$slot.startTime",
+        endTime: "$slot.endTime",
         status: 1,
       },
     },
@@ -492,15 +492,15 @@ const doctorAppointments = async (doctorId: string, status: string) => {
 const doctorAppointmentCounts = async (doctorId: string) => {
   const upcoming = await Appointment.countDocuments({
     doctor: doctorId,
-    status: 'Upcoming',
+    status: "Upcoming",
   });
   const completed = await Appointment.countDocuments({
     doctor: doctorId,
-    status: 'Completed',
+    status: "Completed",
   });
   const cancelled = await Appointment.countDocuments({
     doctor: doctorId,
-    status: 'Cancelled',
+    status: "Cancelled",
   });
 
   return {
@@ -516,83 +516,83 @@ const getAllAppointments = async (
     name?: string;
   },
   page: number = 1,
-  limit: number = 9999999999999
+  limit: number = 9999999999999,
 ) => {
   const { date, name } = searchParams;
   const matchConditions: any = {};
   if (date) {
-    const [day, month, year] = date.split('-');
+    const [day, month, year] = date.split("-");
     const formattedDate = new Date(`${year}-${month}-${day}`);
-    matchConditions['scheduleDetails.date'] = formattedDate;
+    matchConditions["scheduleDetails.date"] = formattedDate;
   }
 
   if (name) {
-    matchConditions['$or'] = [
-      { 'userDetails.name': { $regex: name, $options: 'i' } },
-      { 'doctorDetails.name': { $regex: name, $options: 'i' } },
+    matchConditions["$or"] = [
+      { "userDetails.name": { $regex: name, $options: "i" } },
+      { "doctorDetails.name": { $regex: name, $options: "i" } },
     ];
   }
 
   const appointments = await Appointment.aggregate([
     {
       $lookup: {
-        from: 'doctors',
-        localField: 'doctor',
-        foreignField: '_id',
-        as: 'doctorDetails',
+        from: "doctors",
+        localField: "doctor",
+        foreignField: "_id",
+        as: "doctorDetails",
       },
     },
-    { $unwind: '$doctorDetails' },
+    { $unwind: "$doctorDetails" },
     {
       $lookup: {
-        from: 'users',
-        localField: 'user',
-        foreignField: '_id',
-        as: 'userDetails',
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "userDetails",
       },
     },
-    { $unwind: '$userDetails' },
+    { $unwind: "$userDetails" },
     {
       $lookup: {
-        from: 'doctorschedules',
-        localField: 'schedule',
-        foreignField: '_id',
-        as: 'scheduleDetails',
+        from: "doctorschedules",
+        localField: "schedule",
+        foreignField: "_id",
+        as: "scheduleDetails",
       },
     },
-    { $unwind: '$scheduleDetails' },
+    { $unwind: "$scheduleDetails" },
     {
       $lookup: {
-        from: 'categories',
-        localField: 'doctorDetails.specialist',
-        foreignField: '_id',
-        as: 'specialistDetails',
+        from: "categories",
+        localField: "doctorDetails.specialist",
+        foreignField: "_id",
+        as: "specialistDetails",
       },
     },
-    { $unwind: '$specialistDetails' },
+    { $unwind: "$specialistDetails" },
     { $match: matchConditions },
     {
       $project: {
         _id: 1,
         doctor: {
-          name: '$doctorDetails.name',
-          image: '$doctorDetails.image',
-          country: '$doctorDetails.country',
-          aboutDoctor: '$doctorDetails.aboutDoctor',
-          clinic: '$doctorDetails.clinic',
-          clinicAddress: '$doctorDetails.clinicAddress',
-          experience: '$doctorDetails.experience',
-          specialist: '$specialistDetails.name',
-          consultationFee: '$doctorDetails.consultationFee',
+          name: "$doctorDetails.name",
+          image: "$doctorDetails.image",
+          country: "$doctorDetails.country",
+          aboutDoctor: "$doctorDetails.aboutDoctor",
+          clinic: "$doctorDetails.clinic",
+          clinicAddress: "$doctorDetails.clinicAddress",
+          experience: "$doctorDetails.experience",
+          specialist: "$specialistDetails.name",
+          consultationFee: "$doctorDetails.consultationFee",
         },
-        date: '$scheduleDetails.date',
-        startTime: '$slot.startTime',
-        endTime: '$slot.endTime',
+        date: "$scheduleDetails.date",
+        startTime: "$slot.startTime",
+        endTime: "$slot.endTime",
         user: {
-          name: '$userDetails.name',
-          country: '$userDetails.country',
-          phoneNumber: '$userDetails.phoneNumber',
-          image: '$userDetails.image',
+          name: "$userDetails.name",
+          country: "$userDetails.country",
+          phoneNumber: "$userDetails.phoneNumber",
+          image: "$userDetails.image",
         },
         prescription: 1,
         doctorNote: 1,
@@ -610,6 +610,24 @@ const getAllAppointments = async (
 
   return appointments;
 };
+
+const addNoteWithDoctors = async (appointmentId: string, payload: string[]) => {
+  const appointment = await Appointment.findByIdAndUpdate(
+    appointmentId,
+    { noteForDoctors: payload },
+    { new: true, upsert: true },
+  );
+
+  return appointment;
+};
+const meOnNotesMention = async (doctorId: string) => {
+  const appointments = await Appointment.find({
+    noteForDoctors: { $in: [doctorId] },
+  }).select("prescription doctorNote patientDetails doctor status");
+
+  return appointments;
+};
+
 export const AppointmentServices = {
   bookAppointment,
   getUserAppointments,
@@ -623,4 +641,6 @@ export const AppointmentServices = {
   doctorAppointments,
   doctorAppointmentCounts,
   getAllAppointments,
+  addNoteWithDoctors,
+  meOnNotesMention,
 };

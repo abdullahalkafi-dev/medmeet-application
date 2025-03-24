@@ -158,18 +158,20 @@ const doctorAppointments = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const doctorAppointmentCounts = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await AppointmentServices.doctorAppointmentCounts(
+      req.params.doctorId
+    );
 
-const doctorAppointmentCounts = catchAsync(async (req: Request, res: Response) => {
-  const result = await AppointmentServices.doctorAppointmentCounts(req.params.doctorId);
-
-  sendResponse(res, {
-    success: true,
-    statusCode: StatusCodes.OK,
-    message: 'Doctors appointments count fetched successfully',
-    data: result,
-  });
-}
-)
+    sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: 'Doctors appointments count fetched successfully',
+      data: result,
+    });
+  }
+);
 
 const getAllAppointments = catchAsync(async (req: Request, res: Response) => {
   const result = await AppointmentServices.getAllAppointments(req.query);
@@ -178,6 +180,31 @@ const getAllAppointments = catchAsync(async (req: Request, res: Response) => {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'All appointments fetched successfully',
+    data: result,
+  });
+});
+const addNoteWithDoctors = catchAsync(async (req: Request, res: Response) => {
+  const appointmentId = req.params.id;
+  const payload = req.body;
+  const result = await AppointmentServices.addNoteWithDoctors(
+    appointmentId,
+    payload
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Note added to appointment successfully',
+    data: result,
+  });
+});
+const meOnNotesMention = catchAsync(async (req: Request, res: Response) => {
+  const result = await AppointmentServices.meOnNotesMention(req.user.id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Notes fetched successfully',
     data: result,
   });
 });
@@ -194,5 +221,7 @@ export const AppointmentControllers = {
   appointmentStatusUpdate,
   doctorAppointments,
   doctorAppointmentCounts,
-  getAllAppointments
+  getAllAppointments,
+  meOnNotesMention,
+  addNoteWithDoctors
 };

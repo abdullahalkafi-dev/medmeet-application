@@ -3,3 +3,4 @@ node_modules
 medmeet-admin.json
 /winston
 /uploads/
+dist/

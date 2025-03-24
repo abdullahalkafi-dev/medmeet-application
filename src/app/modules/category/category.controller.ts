@@ -11,7 +11,6 @@ const createCategoryToDB = catchAsync(
       image = `/images/${req.files.image[0].filename}`;
     }
 
-
     const categoryData = JSON.parse(req.body.data);
     const data = {
       image,

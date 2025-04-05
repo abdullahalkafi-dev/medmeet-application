@@ -7,6 +7,7 @@ import seedSuperAdmin from './DB';
 
 import { errorLogger, logger } from './shared/logger';
 import { setupSocket } from './app/socket/socket';
+import redisClient from './util/redisClient';
 
 //uncaught exception
 process.on('uncaughtException', error => {
@@ -22,7 +23,7 @@ async function main() {
 
     const port =
       typeof config.port === 'number' ? config.port : Number(config.port);
-
+      await redisClient.connect();
     server.listen(port, config.ip_address as string, () => {
       logger.info(
         colors.yellow(`♻️  Application listening on port:${config.port}`)

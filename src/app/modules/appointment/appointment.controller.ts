@@ -199,7 +199,7 @@ const addNoteWithDoctors = catchAsync(async (req: Request, res: Response) => {
   });
 });
 const meOnNotesMention = catchAsync(async (req: Request, res: Response) => {
-  const result = await AppointmentServices.meOnNotesMention(req.user.id);
+  const result = await AppointmentServices.meOnNotesMention(req?.params?.id);
 
   sendResponse(res, {
     success: true,

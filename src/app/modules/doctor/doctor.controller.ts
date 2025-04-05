@@ -10,7 +10,6 @@ const createDoctorToDB = catchAsync(
     console.log(req.body);
     const { ...doctorData } = req.body;
     const doctor = await DoctorService.createDoctorToDB(doctorData);
-
     sendResponse(res, {
       success: true,
       statusCode: StatusCodes.OK,
@@ -19,7 +18,6 @@ const createDoctorToDB = catchAsync(
     });
   },
 );
-
 const loginDoctor = catchAsync(async (req: Request, res: Response) => {
   const { uniqueId, password, fcmToken } = req.body;
   const doctor = await DoctorService.loginDoctor({
@@ -50,31 +48,31 @@ const getDoctorProfile = catchAsync(async (req: Request, res: Response) => {
 
 const updateDoctorProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const doctor = req.user as JwtPayload; 
+    const doctor = req.user as JwtPayload;
     let image;
     let professionalIdFront;
     let professionalIdBack;
     let medicalLicense;
-    if (req.files && 'image' in req.files && req.files.image[0]) {
+    if (req.files && "image" in req.files && req.files.image[0]) {
       image = `/images/${req.files.image[0].filename}`;
     }
     if (
       req.files &&
-      'professionalIdFront' in req.files &&
+      "professionalIdFront" in req.files &&
       req.files.professionalIdFront[0]
     ) {
       professionalIdFront = `/images/${req.files.professionalIdFront[0].filename}`;
     }
     if (
       req.files &&
-      'professionalIdBack' in req.files &&
+      "professionalIdBack" in req.files &&
       req.files.professionalIdBack[0]
     ) {
       professionalIdBack = `/images/${req.files.professionalIdBack[0].filename}`;
     }
     if (
       req.files &&
-      'medicalLicense' in req.files &&
+      "medicalLicense" in req.files &&
       req.files.medicalLicense[0]
     ) {
       medicalLicense = `/docs/${req.files.medicalLicense[0].filename}`;
@@ -90,7 +88,6 @@ const updateDoctorProfile = catchAsync(
       ...doctorData,
     };
     const result = await DoctorService.updateDoctorProfileToDB(doctor, data);
-
 
     sendResponse(res, {
       success: true,

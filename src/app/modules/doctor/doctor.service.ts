@@ -8,6 +8,7 @@ import { jwtHelper } from "../../../helpers/jwtHelper";
 import config from "../../../config";
 import { QueryBuilder } from "../../builder/QueryBuilder";
 import { Appointment } from "../appointment/appointment.model";
+import cacheService from "../../../util/cacheService";
 
 const createDoctorToDB = async (payload: Partial<TDoctor>) => {
   if (!payload.fcmToken) {
@@ -22,10 +23,8 @@ const createDoctorToDB = async (payload: Partial<TDoctor>) => {
   }
   // Create doctor first
   const doctor = await Doctor.create(payload);
-
   return doctor;
 };
-
 const loginDoctor = async (
   payload: Partial<TDoctor> & { uniqueId: string },
 ) => {
@@ -68,7 +67,7 @@ const loginDoctor = async (
       { fcmToken: payload.fcmToken },
     );
   }
-  if (!doctor) {
+  if (!doctor) { 
     throw new AppError(StatusCodes.BAD_REQUEST, "Doctor not found");
   }
   const { password: _, ...userWithoutPassword } = doctor.toObject();
@@ -76,6 +75,13 @@ const loginDoctor = async (
 };
 const getDoctorProfileFromDB = async (doctor: JwtPayload) => {
   const { id } = doctor;
+
+  const isAlreadyInCache:any = await cacheService.getCache(
+    `doctorProfile_${id.toString()}`,
+  );
+  if (isAlreadyInCache && (typeof isAlreadyInCache.specialist !== "string")) {
+    return isAlreadyInCache;
+  }
   const isExistDoctor = await Doctor.findById(id).populate("specialist").lean();
   if (!isExistDoctor) {
     throw new AppError(StatusCodes.BAD_REQUEST, "Doctor doesn't exist!");
@@ -107,7 +113,11 @@ const getDoctorProfileFromDB = async (doctor: JwtPayload) => {
       image: review.user.image,
     })),
   };
-
+   await cacheService.setCache(
+    `doctorProfile_${id.toString()}`,
+    result,
+    60 * 60 * 24,
+  ); // Cache for 24 hours
   return result;
 };
 
@@ -141,6 +151,7 @@ const updateDoctorProfileToDB = async (
   if (payload.medicalLicense && isExistDoctor.medicalLicense) {
     unlinkFile(isExistDoctor.medicalLicense);
   }
+  console.log(payload.image);
   if (payload.dob) {
     const [day, month, year] = (payload.dob as any).split("-");
     payload.dob = new Date(`${year}-${month}-${day}`);
@@ -171,10 +182,30 @@ const updateDoctorProfileToDB = async (
       { new: true },
     );
   }
+  // Cache the updated doctor profile for 24 hours
+  await cacheService.deleteCache(
+    `doctorProfile_${id.toString()}`,
+  
+  );
+  await cacheService.deleteCache(
+    `singleDoctor_${id.toString()}`,
+  
+  );
 
   return updateDoc;
 };
 const getSingleDoctor = async (id: string) => {
+   const cacheKey= `singleDoctor_${id.toString()}`
+
+ //check is already in cache
+  const isAlreadyInCache:any = await cacheService.getCache(
+    cacheKey
+  );
+
+  if (isAlreadyInCache  && (typeof isAlreadyInCache.specialist !== "string")) {
+    return isAlreadyInCache;
+  }
+
   const doctor = await Doctor.findById(id).populate("specialist").lean();
 
   const appointments = await Appointment.find({ doctor: id })
@@ -237,6 +268,15 @@ const getSingleDoctor = async (id: string) => {
     reviews,
     ratingPercentage,
   };
+ 
+   //set cache for 24 hours
+  await cacheService.setCache(
+    cacheKey ,
+    result,
+    60 * 60 * 24,
+  );
+
+
   return result;
 };
 //get all doctors
@@ -285,6 +325,20 @@ const updateDoctorApprovedStatus = async (
     { approvedStatus: payload.status },
     { new: true },
   );
+
+  if (!updatedDoctor) {
+    throw new AppError(StatusCodes.NOT_FOUND, "Doctor not found!");
+  }
+    // Cache the updated doctor profile for 24 hours
+    await cacheService.deleteCache(
+      `doctorProfile_${id.toString()}`,
+   
+    );
+    await cacheService.deleteCache(
+      `singleDoctor_${id.toString()}`
+
+    );
+  
   return updatedDoctor;
 };
 const deleteDoctor = async (id: string) => {
@@ -293,6 +347,15 @@ const deleteDoctor = async (id: string) => {
     { status: "delete" },
     { new: true },
   );
+  if (!result) {
+    throw new AppError(StatusCodes.NOT_FOUND, "Doctor not found!");
+  }
+  if (result.image) {
+    unlinkFile(result.image);
+  }
+  //clear cache
+  await cacheService.deleteCache(`doctorProfile_${id.toString()}`);
+  await cacheService.deleteCache(`singleDoctor_${id.toString()}`);
   return result;
 };
 export const DoctorService = {

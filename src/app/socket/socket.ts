@@ -1,7 +1,7 @@
-import { Server } from 'socket.io';
-import { handleSendMessage } from './userMessage/message';
-import { Types } from 'mongoose';
-import { ChatRoom } from '../modules/chat/chat.model';
+import { Server } from "socket.io";
+import { handleSendMessage } from "./userMessage/message";
+import { Types } from "mongoose";
+import { ChatRoom } from "../modules/chat/chat.model";
 
 export const users = new Map();
 
@@ -11,18 +11,18 @@ let io: Server; // Store io instance globally
 const setupSocket = (server: any) => {
   io = new Server(server, {
     cors: {
-      origin: ['*', 'http://localhost:3000', 'http://localhost:5173'],
-      methods: ['GET', 'POST'],
+      origin: ["*", "http://localhost:3000", "http://localhost:5173"],
+      methods: ["GET", "POST"],
     },
   });
-  io.on('connection', socket => {
-    console.log('new user connected');
-    socket.on('register', userId => {
+  io.on("connection", socket => {
+    console.log("new user connected");
+    socket.on("register", userId => {
       users.set(userId, socket.id);
-      io.emit('onlineUsers', Array.from(users.keys()));
+      io.emit("onlineUsers", Array.from(users.keys()));
     });
 
-    socket.on('activeChat', data => {
+    socket.on("activeChat", data => {
       // data contains { userId, activeChatPartnerId }
       if (data.activeChatPartnerId) {
         activeChatUsers.set(data.userId, data.activeChatPartnerId);
@@ -30,7 +30,7 @@ const setupSocket = (server: any) => {
         activeChatUsers.delete(data.userId);
       }
     });
-    socket.on('sendMessage', textData => {
+    socket.on("sendMessage", textData => {
       const data = JSON.parse(textData);
       const { senderId, receiverId, message } = data;
 
@@ -57,7 +57,6 @@ const setupSocket = (server: any) => {
               lastMessageBy: senderId.toString(),
               lastMessageTime: new Date(),
             });
-
             await newChat.save();
           }
           const finalChatRoomData: any = await ChatRoom.findOne({
@@ -66,14 +65,13 @@ const setupSocket = (server: any) => {
               { participant1: receiverId, participant2: senderId },
             ],
           })
-            .populate('participant1', 'name image')
-            .populate('participant2', 'name image');
-          console.log(senderId, receiverId);
+            .populate("participant1", "name image")
+            .populate("participant2", "name image");
 
           if (!finalChatRoomData) {
             return;
           }
-
+      
           // Determine which participant is sender and which is receiver
           const isSenderParticipant1 =
             finalChatRoomData.participant1._id.toString() ===
@@ -129,7 +127,7 @@ const setupSocket = (server: any) => {
         seenBy: [senderId as any],
       });
     });
-    socket.on('disconnect', () => {
+    socket.on("disconnect", () => {
       users.forEach((socketId, userId) => {
         if (socketId === socket.id) {
           users.delete(userId);

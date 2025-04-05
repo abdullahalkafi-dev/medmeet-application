@@ -7,6 +7,7 @@ import { User } from "../user/user.model";
 import { Doctor } from "../doctor/doctor.model";
 import admin, { app } from "firebase-admin";
 import { NotificationService } from "../notification/notification.service";
+import cacheService from "../../../util/cacheService";
 
 const bookAppointment = async (req: any) => {
   const appointmentData = JSON.parse(req.body.data); // Parse JSON data from form-data
@@ -25,6 +26,10 @@ const bookAppointment = async (req: any) => {
   const doctor = await Doctor.findById(doctorId).lean().exec();
   const fcmToken = doctor?.fcmToken;
   const isDoctorScheduled = await DoctorSchedule.findOne({
+    doctor: doctorId,
+    _id: schedule._id,
+  });
+  console.log({
     doctor: doctorId,
     _id: schedule._id,
   });
@@ -283,7 +288,7 @@ const reviewAppointment = async (id: string, userId: string, payload: any) => {
     },
     { new: true },
   );
-  console.log(appointment);
+
   if (doctor && doctor.fcmToken) {
     const message = {
       token: doctor.fcmToken, // Device FCM Token
@@ -297,6 +302,10 @@ const reviewAppointment = async (id: string, userId: string, payload: any) => {
     };
     await admin.messaging().send(message);
   }
+
+  // Cache the updated doctor profile for 24 hours
+  await cacheService.deleteCache(`doctorProfile_${id.toString()}`);
+  await cacheService.deleteCache(`singleDoctor_${id.toString()}`);
 
   return appointment;
 };

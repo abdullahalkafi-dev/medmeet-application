@@ -112,15 +112,16 @@ router.post(
 );
 
 router.get(
-  "/notes/mentions",                               
-  auth(                               
-    USER_ROLES.USER,                               
-    USER_ROLES.ADMIN,                               
-    USER_ROLES.SUPER_ADMIN,                               
-    USER_ROLES.DOCTOR,                               
-  ),                               
+  "/note/mentions/:id",
+  auth(
+    USER_ROLES.USER,
+    USER_ROLES.ADMIN,
+    USER_ROLES.SUPER_ADMIN,
+    USER_ROLES.DOCTOR,
+  ),
   AppointmentControllers.meOnNotesMention,
 );
+
 
 router.get(
   "/",

@@ -242,7 +242,7 @@ const chatList = async (userId: string) => {
   // Format the chat list to return
   const formattedChatList = chatRooms.map((room: any) => {
     // Determine if userId is participant1 or participant2
-    const isUserParticipant1 = room.participant1._id.toString() === userId;
+    const isUserParticipant1 = room.participant1?._id?.toString() === userId;
 
     // Get partner's details
     const partnerId = isUserParticipant1

@@ -10,6 +10,7 @@ const createDoctorSchedule = async (payload: {
   slots: TSlot[];
 }) => {
   const { doctorId, date, slots } = payload;
+  console.log(payload);
   const existingSchedule = await DoctorSchedule.findOne({
     doctor: doctorId,
     date: new Date(date.split("-").reverse().join("-")),
@@ -86,6 +87,7 @@ const createDoctorSchedule = async (payload: {
     );
     existingSchedule.slots.push(...newSlots);
     await existingSchedule.save();
+    console.log(existingSchedule);
     return existingSchedule;
   }
 
@@ -95,7 +97,7 @@ const createDoctorSchedule = async (payload: {
     date: new Date(date.split("-").reverse().join("-")),
     slots: uniqueSlots,
   });
-
+  console.log(newSchedule);
   return newSchedule;
 };
 

@@ -185,11 +185,9 @@ const updateDoctorProfileToDB = async (
   // Cache the updated doctor profile for 24 hours
   await cacheService.deleteCache(
     `doctorProfile_${id.toString()}`,
-  
   );
   await cacheService.deleteCache(
     `singleDoctor_${id.toString()}`,
-  
   );
 
   return updateDoc;

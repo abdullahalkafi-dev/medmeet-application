@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prefer-const */
-import { FilterQuery, Query } from 'mongoose';
+import { FilterQuery, Query } from "mongoose";
 
 export class QueryBuilder<T> {
   public query: Record<string, unknown>; //payload
@@ -11,7 +11,7 @@ export class QueryBuilder<T> {
     this.modelQuery = modelQuery;
   }
   search(searchableFields: string[]) {
-    let searchTerm = '';
+    let searchTerm = "";
 
     if (this.query?.searchTerm) {
       searchTerm = this.query.searchTerm as string;
@@ -21,8 +21,8 @@ export class QueryBuilder<T> {
       $or: searchableFields.map(
         field =>
           ({
-            [field]: new RegExp(searchTerm, 'i'),
-          } as FilterQuery<T>)
+            [field]: new RegExp(searchTerm, "i"),
+          } as FilterQuery<T>),
       ),
     });
     return this;
@@ -41,11 +41,11 @@ export class QueryBuilder<T> {
 
     return this;
   }
-  sort(section: string = 'null') {
-    let sortBy = '-createdAt';
+  sort(section: string = "null") {
+    let sortBy = "-createdAt";
 
-    if (section === 'commentSection') {
-      sortBy = '-helpful';
+    if (section === "commentSection") {
+      sortBy = "-helpful";
     }
 
     if (this.query?.sortBy) {
@@ -55,10 +55,10 @@ export class QueryBuilder<T> {
     return this;
   }
   fields() {
-    let fields = '';
+    let fields = "";
 
     if (this.query?.fields) {
-      fields = (this.query?.fields as string).split(',').join(' ');
+      fields = (this.query?.fields as string).split(",").join(" ");
     }
 
     this.modelQuery = this.modelQuery.select(fields);
@@ -66,7 +66,7 @@ export class QueryBuilder<T> {
   }
   filter() {
     const queryObj = { ...this.query };
-    const excludeFields = ['searchTerm', 'page', 'limit', 'sortBy', 'fields'];
+    const excludeFields = ["searchTerm", "page", "limit", "sortBy", "fields"];
     if (queryObj.specialist) {
       queryObj.specialist = { $eq: queryObj.specialist as string };
     }
@@ -75,8 +75,8 @@ export class QueryBuilder<T> {
     }
     excludeFields.forEach(e => delete queryObj[e]);
     Object.keys(queryObj).forEach(key => {
-      if (typeof queryObj[key] === 'string') {
-        queryObj[key] = { $regex: queryObj[key], $options: 'i' };
+      if (typeof queryObj[key] === "string") {
+        queryObj[key] = { $regex: queryObj[key], $options: "i" };
       }
     });
     this.modelQuery = this.modelQuery.find(queryObj as FilterQuery<T>);

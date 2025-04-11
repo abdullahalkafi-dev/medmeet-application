@@ -1,9 +1,9 @@
-import { ICreateAccount, IResetPassword } from '../types/emailTamplate';
+import { ICreateAccount, IResetPassword } from "../types/emailTamplate";
 
 const createAccount = (values: ICreateAccount) => {
   const data = {
     to: values.email,
-    subject: 'Verify your account',
+    subject: "Verify your account",
     html: `<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 50px; padding: 20px; color: #555;">
     <div style="width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
         <img src="https://res.cloudinary.com/dqumshlcs/image/upload/v1739507391/medmeet_yhhou2.png" alt="Logo" style="display: block; margin: 0 auto 20px; width:150px" />
@@ -23,7 +23,7 @@ const createAccount = (values: ICreateAccount) => {
 const resetPassword = (values: IResetPassword) => {
   const data = {
     to: values.email,
-    subject: 'Reset your password',
+    subject: "Reset your password",
     html: `<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; color: #333;">
     <table cellpadding="0" cellspacing="0" border="0" width="100%" style="min-width: 100%; background-color: #f4f4f4;">
         <tr>
@@ -33,7 +33,7 @@ const resetPassword = (values: IResetPassword) => {
                         <td align="center" style="padding: 40px 40px 30px;">
                             <img src="https://res.cloudinary.com/dqumshlcs/image/upload/v1739507391/medmeet_yhhou2.png" alt="Logo" style="display: block; width: 180px; max-width: 100%; height: auto;" />
                         </td>
-                    </tr>
+                    </tr> 
                     <tr>
                         <td style="padding: 0 40px;">
                             <h1 style="color: #333; font-size: 24px; text-align: center; margin: 0 0 20px;">Your Single Use Code</h1>

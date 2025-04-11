@@ -41,8 +41,7 @@ const userForgetPasswordToDB = async (uniqueId: string) => {
     oneTimeCode: otp,
     expireAt: new Date(Date.now() + 3 * 600000),
   };
-  console.log(authentication);
-  console.log(value);
+;
   await User.findOneAndUpdate(
     { email: uniqueId },
     { $set: { authentication } }

@@ -167,24 +167,41 @@ const getSingleUser = async (id: string) => {
   await cacheService.setCache(cacheKey, result, 60 * 60 * 24); // 1 day
   return result;
 };
+const normalizeQuery = (query: Record<string, unknown>) => {
+  return Object.keys(query)
+    .sort()
+    .reduce((obj, key) => {
+      let value = query[key];
+      // Normalize empty strings, nulls, or undefined to a standard value
+      if (value === undefined || value === null || value === "") {
+        value = "";
+      }
 
+      // Sort array values (like fields=email,name) for consistent ordering
+      if (typeof value === "string" && value.includes(",")) {
+        value = value
+          .split(",")
+          .map((v) => v.trim())
+          .sort()
+          .join(",");
+      }
+
+      obj[key] = value;
+      return obj;
+    }, {} as Record<string, unknown>);
+};
 //get all users
 const getAllUsers = async (query: Record<string, unknown>) => {
   // Create a dynamic cache key based on the query parameters
   // Sort keys to ensure consistent ordering regardless of how the query object was created
-  const orderedQuery = Object.keys(query)
-    .sort()
-    .reduce((obj, key) => {
-      obj[key] = query[key];
-      return obj;
-    }, {} as Record<string, unknown>);
+  const orderedQuery = normalizeQuery(query);
   const queryStr = JSON.stringify(orderedQuery);
   const cacheKey = `all_users_${queryStr}`;
-
   // Check if the data is already in cache
   const cachedData = await cacheService.getCache(cacheKey);
   if (cachedData) {
-    return cachedData;
+
+    return cachedData as {result:any ;meta:any };
   }
 
   const userQuery = new QueryBuilder(User.find(), query)
@@ -198,6 +215,7 @@ const getAllUsers = async (query: Record<string, unknown>) => {
   // Set cache with a 1-hour expiration time
   await cacheService.setCache(cacheKey, { result, meta }, 60 * 60 * 12); // 12 hour
   return { result, meta };
+
 };
 
 const deleteUser = async (id: string) => {

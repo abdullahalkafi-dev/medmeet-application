@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { model, Schema } from 'mongoose';
 import config from '../../../config';
 import { USER_ROLES } from '../../../enums/user';

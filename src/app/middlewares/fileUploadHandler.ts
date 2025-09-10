@@ -4,7 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import multer, { FileFilterCallback } from "multer";
 import path from "path";
 import AppError from "../errors/AppError";
-
+import sharp from "sharp";
 const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
   // Create upload folder
   const baseUploadDir = path.join(process.cwd(), "uploads");
@@ -34,6 +34,7 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
           uploadDir = path.join(baseUploadDir, "medias");
           break;
         case "doc":
+        case "docs":
         case "medicalLicense":
           uploadDir = path.join(baseUploadDir, "docs");
           break;
@@ -45,12 +46,28 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
     },
 
     filename: (req, file, cb) => {
-      const fileExt =
-        file.fieldname === "medicalLicense" ||
+      let fileExt: string;
+      
+      if (
         file.fieldname === "doc" ||
-        file.fieldname === "docs"
-          ? ".pdf"
-          : ".png"; // Force .png for images and .pdf for certificates
+        file.fieldname === "docs" ||
+        file.fieldname === "medicalLicense"
+      ) {
+        fileExt = ".pdf";
+      } else if (
+        file.fieldname === "image" ||
+        file.fieldname === "professionalIdFront" ||
+        file.fieldname === "professionalIdBack"
+      ) {
+        fileExt = ".tmp"; // will be converted to .webp later
+      } else if (file.fieldname === "media") {
+        // For media, retain the original extension
+        fileExt = path.extname(file.originalname);
+      } else {
+        // Default case - retain original extension
+        fileExt = path.extname(file.originalname);
+      }
+      
       const date = new Date();
       const formattedDate = `${date.getDate()}-${
         date.getMonth() + 1
@@ -120,6 +137,7 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
       }
     } else if (
       file.fieldname === "doc" ||
+      file.fieldname === "docs" ||
       file.fieldname === "medicalLicense"
     ) {
       if (file.mimetype === "application/pdf") {
@@ -140,12 +158,98 @@ const fileUploadHandler = (req: Request, res: Response, next: NextFunction) => {
     { name: "image", maxCount: 10 },
     { name: "media", maxCount: 10 },
     { name: "doc", maxCount: 10 },
+    { name: "docs", maxCount: 10 },
     { name: "professionalIdFront", maxCount: 10 },
     { name: "professionalIdBack", maxCount: 10 },
     { name: "medicalLicense", maxCount: 10 },
   ]);
+  // Execute the multer middleware
+  upload(req, res, async (err: any) => {
+    if (err) {
+      return next(err);
+    }
 
-  return upload(req, res, next);
+    // Post-process image files: convert to WebP and compress.
+    if (req.files) {
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      const imageFields = ["image", "professionalIdFront", "professionalIdBack"];
+      
+      try {
+        // Process each image field type
+        for (const fieldName of imageFields) {
+          if (fieldName in files) {
+            const imageFiles = files[fieldName];
+            
+            // Loop through each image file uploaded for this field
+            for (const file of imageFiles) {
+              const inputFilePath = file.path;
+              
+              // Check if input file exists
+              if (!fs.existsSync(inputFilePath)) {
+                throw new Error(`Input file does not exist: ${inputFilePath}`);
+              }
+              
+              // Create new filename by replacing .tmp with .webp
+              const newFilePath = inputFilePath.replace(/\.tmp$/, ".webp");
+
+              // Process the image with Sharp
+              const sharpInstance = sharp(inputFilePath);
+              await sharpInstance
+                .resize({ width: 1024 })
+                .webp({ quality: 40, effort: 6, nearLossless: false })
+                .toFile(newFilePath);
+
+              // Ensure Sharp releases the file handle
+              sharpInstance.destroy();
+
+
+              // Check if new file was created
+              if (!fs.existsSync(newFilePath)) {
+                throw new Error(`Output file was not created: ${newFilePath}`);
+              }
+
+              // Wait a bit to ensure file handles are released
+              await new Promise(resolve => setTimeout(resolve, 100));
+
+              // Try to remove the temporary file with retry logic
+              let retryCount = 0;
+              const maxRetries = 3;
+              while (retryCount < maxRetries) {
+                try {
+                  fs.unlinkSync(inputFilePath);
+                  break;
+                } catch (unlinkError: any) {
+                  retryCount++;
+                  
+                  if (retryCount === maxRetries) {
+                    // If we can't delete the file after max retries, log warning but don't fail the entire process
+                   
+                  } else {
+                    // Wait a bit before retrying
+                    await new Promise(resolve => setTimeout(resolve, 200 * retryCount));
+                  }
+                }
+              }
+
+              // Update file metadata if needed for later middlewares
+              file.path = newFilePath;
+              file.filename = path.basename(newFilePath);
+            }
+          }
+        }
+      } catch (error) {
+      
+        return next(
+          new AppError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `Image processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          ),
+        );
+      }
+    }
+
+    next();
+  });
 };
 
 export default fileUploadHandler;

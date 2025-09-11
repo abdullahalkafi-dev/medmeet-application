@@ -5,7 +5,7 @@ export const buildDateFilter = (endTime: string) => {
   const startOfDay = new Date(
     specifiedDate.getFullYear(),
     specifiedDate.getMonth(),
-    specifiedDate.getDate()
+    specifiedDate.getDate(),
   );
   const endOfDay = new Date(
     specifiedDate.getFullYear(),
@@ -14,7 +14,7 @@ export const buildDateFilter = (endTime: string) => {
     23,
     59,
     59,
-    999
+    999,
   );
 
   return {

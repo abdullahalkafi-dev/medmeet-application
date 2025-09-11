@@ -1,9 +1,7 @@
-
-import { StatusCodes } from 'http-status-codes';
-import AppError from '../app/errors/AppError';
-import axios from 'axios';
-import config from '../config';
-
+import { StatusCodes } from "http-status-codes";
+import AppError from "../app/errors/AppError";
+import axios from "axios";
+import config from "../config";
 
 export async function sendEmail(email: string, subject: string, text: string) {
   try {
@@ -42,7 +40,7 @@ export async function sendEmail(email: string, subject: string, text: string) {
     `;
 
     const response = await axios.post(
-      'https://api.resend.com/emails',
+      "https://api.resend.com/emails",
       {
         from: config.resend.from_email,
         to: email,
@@ -51,16 +49,16 @@ export async function sendEmail(email: string, subject: string, text: string) {
       },
       {
         headers: {
-          'Authorization': `Bearer ${config.resend.api_key}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${config.resend.api_key}`,
+          "Content-Type": "application/json",
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
     throw new AppError(
       StatusCodes.INTERNAL_SERVER_ERROR,
-      'Error sending email via Resend'
+      "Error sending email via Resend",
     );
   }
 }

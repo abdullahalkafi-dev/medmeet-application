@@ -23,6 +23,10 @@ export default {
     host: process.env.EMAIL_HOST,
     pass: process.env.EMAIL_PASS,
   },
+  resend: {
+    api_key: process.env.RESEND_API_KEY,
+    from_email: process.env.RESEND_FROM_EMAIL || 'noreply@medmeet.eu',
+  },
   super_admin: {
     email: process.env.SUPER_ADMIN_EMAIL,
     password: process.env.SUPER_ADMIN_PASSWORD,

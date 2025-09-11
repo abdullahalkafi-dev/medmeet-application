@@ -1,30 +1,31 @@
-import nodemailer from 'nodemailer';
+import axios from 'axios';
 import config from '../config';
 import { errorLogger, logger } from '../shared/logger';
 import { ISendEmail } from '../types/email';
 
-const transporter = nodemailer.createTransport({
-  host: config.email.host,
-  port: Number(config.email.port),
-  secure: false,
-  auth: {
-    user: config.email.user,
-    pass: config.email.pass,
-  },
-});
-
 const sendEmail = async (values: ISendEmail) => {
   try {
-    const info = await transporter.sendMail({
-      from: `"MED MEET" ${config.email.from}`,
-      to: values.to,
-      subject: values.subject,
-      html: values.html,
-    });
+    const response = await axios.post(
+      'https://api.resend.com/emails',
+      {
+        from: config.resend.from_email,
+        to: values.to,
+        subject: values.subject,
+        html: values.html,
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${config.resend.api_key}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-    logger.info('Mail send successfully', info.accepted);
+    logger.info('Mail sent successfully via Resend', response.data);
+    return response.data;
   } catch (error) {
-    errorLogger.error('Email', error);
+    errorLogger.error('Email sending failed via Resend', error);
+    throw error;
   }
 };
 

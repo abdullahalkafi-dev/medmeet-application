@@ -53,6 +53,17 @@ class RedisClient {
       console.error(`Error deleting key ${key}:`, err);
     }
   }
+
+  async disconnect(): Promise<void> {
+    try {
+      if (this.client.isOpen) {
+        await this.client.disconnect();
+        console.log('Disconnected from Redis');
+      }
+    } catch (err) {
+      console.error('Error disconnecting from Redis:', err);
+    }
+  }
 }
 
 export default new RedisClient();

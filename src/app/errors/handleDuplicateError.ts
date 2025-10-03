@@ -3,7 +3,7 @@
 import { TErrorSources, TGenericErrorResponse } from "../../types/error";
 
 
-// Todo without further modification you can use the code. If you want to customize the error message then you can do so.
+
 
 const handleDuplicateError = (err: any): TGenericErrorResponse => {
   // Extract value within double quotes using regex
